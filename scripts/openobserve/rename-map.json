@@ -1,0 +1,10 @@
+{
+  "comment": "Ordered rebrand rules applied by rebrand.mjs to every tracked text file of a pristine DataDog/rum-events-format tree. Order matters: more specific rules must precede rules that match a substring of them. 'literal' rules are plain string replacement; 'regex' rules are applied with the 'g' flag. Surgical by design: only the RUM event internal namespace (_dd -> _oo), the tracing-propagator enum, and repository/description identity are changed. Fork-owned identity files (LICENSE, NOTICE, README, .github) are handled by the keep-ours overlay, not here. Cosmetic 'Datadog' mentions in schema descriptions are intentionally left alone. lib/generated/** is NOT rebranded here: it is regenerated from the rebranded schemas by `yarn generate`.",
+  "rules": [
+    { "literal": "DataDog/rum-events-format", "to": "openobserve/rum-events-format", "why": "repository URL in lib/package.json 'repository' field" },
+    { "literal": "DataDog/browser-sdk", "to": "openobserve/browser-sdk", "why": "browser-sdk consumer references" },
+    { "literal": "JSON schema of Datadog RUM events", "to": "JSON schema of OpenObserve RUM events", "why": "lib/package.json description" },
+    { "literal": "[\"datadog\", \"b3\", \"b3multi\", \"tracecontext\"]", "to": "[\"openobserve\", \"datadog\", \"b3\", \"b3multi\", \"tracecontext\"]", "why": "add 'openobserve' as a selectable tracing propagator so telemetry configuration events emitted by the OpenObserve SDK validate" },
+    { "regex": "\\b_dd\\b", "to": "_oo", "why": "RUM/telemetry event internal namespace field renamed _dd -> _oo across all schemas and samples. Word-boundary regex; upstream schemas only use the exact token \"_dd\"." }
+  ]
+}

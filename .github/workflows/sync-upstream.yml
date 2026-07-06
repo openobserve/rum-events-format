@@ -1,0 +1,130 @@
+name: Sync upstream
+
+on:
+  schedule:
+    # First day of every month, 05:30 UTC — runs before the browser-sdk sync (06:00)
+    # so a fresh schema commit is available for browser-sdk to pin.
+    - cron: '30 5 1 * *'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Upstream commit/ref to sync to (e.g. a full SHA or upstream/master). Empty = upstream default branch tip.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: openobserve
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/DataDog/rum-events-format.git
+
+      - name: Configure git author
+        run: |
+          git config user.name 'openobserve-sync[bot]'
+          git config user.email 'engineering@openobserve.ai'
+
+      - name: Run sync
+        id: sync
+        run: |
+          set +e
+          bash scripts/openobserve/sync-upstream.sh "${{ inputs.target }}" 2>&1 | tee sync.log
+          code=${PIPESTATUS[0]}
+          set -e
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" = "0" ]; then
+            if grep -q 'Already up to date' sync.log; then
+              echo "status=up-to-date" >> "$GITHUB_OUTPUT"
+            else
+              echo "status=synced" >> "$GITHUB_OUTPUT"
+              echo "target=$(cat scripts/openobserve/UPSTREAM_BASE)" >> "$GITHUB_OUTPUT"
+              echo "branch=$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "status=failed" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate schemas + samples
+        id: validate
+        if: steps.sync.outputs.status == 'synced'
+        continue-on-error: true
+        run: yarn validate 2>&1 | tail -20 | tee validate-summary.txt
+
+      - name: Assert no _dd leaked into schemas
+        id: nodd
+        if: steps.sync.outputs.status == 'synced'
+        continue-on-error: true
+        run: |
+          if git grep -n '"_dd"' -- schemas/ samples/ >/dev/null 2>&1; then
+            echo "found stray _dd references:" && git grep -n '"_dd"' -- schemas/ samples/
+            exit 1
+          fi
+          echo "clean: no _dd in schemas/ or samples/"
+
+      - name: Push sync branch and open PR
+        if: steps.sync.outputs.status == 'synced'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH='${{ steps.sync.outputs.branch }}'
+          TARGET='${{ steps.sync.outputs.target }}'
+          git push -f origin "$BRANCH"
+          BODY=$(cat <<EOF
+          Automated upstream sync to **DataDog/rum-events-format @ \`${TARGET:0:12}\`**.
+
+          Pipeline: upstream commit → keep-ours overlay → rebrand codemod (\`_dd\`→\`_oo\`, +openobserve propagator) → \`yarn generate\` → format.
+
+          | Gate | Result |
+          | --- | --- |
+          | Schema/sample validation | ${{ steps.validate.outcome }} |
+          | No \`_dd\` leaked | ${{ steps.nodd.outcome }} |
+
+          \`\`\`
+          $(cat validate-summary.txt 2>/dev/null || echo 'no validate summary')
+          \`\`\`
+
+          After merge, bump the pin in browser-sdk:
+          \`yarn openobserve:schemas --update <merged-commit-sha>\`
+
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)
+          EOF
+          )
+          gh pr create \
+            --base openobserve \
+            --head "$BRANCH" \
+            --title "chore(sync): upstream rum-events-format @ ${TARGET:0:12}" \
+            --body "$BODY" \
+            || gh pr edit "$BRANCH" --body "$BODY"
+
+      - name: Report failure
+        if: steps.sync.outputs.status == 'failed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "rum-events-format upstream sync failed ($(date -u +%Y-%m-%d))" \
+            --body "The automated upstream sync failed (exit code ${{ steps.sync.outputs.exit_code }}).
+
+          \`\`\`
+          $(tail -40 sync.log)
+          \`\`\`
+
+          Reproduce locally with \`bash scripts/openobserve/sync-upstream.sh\`."
+          exit 1
