@@ -19,15 +19,14 @@
   "action": {
     "id": "ae3a5d82-cdd1-468d-9bc9-3aa9e54d953c"
   },
-  "experimental_features": [
-    "foo"
-  ],
+  "experimental_features": ["foo"],
   "telemetry": {
     "status": "error",
-    "message": "XHR error POST https://api.openobserve.ai/api/v1/logs-analytics/aggregate?type=rum",
+    "message": "XHR error POST https://app.datadoghq.com/api/v1/logs-analytics/aggregate?type=rum",
     "error": {
       "stack": "Failed to load",
       "kind": "TypeError"
-    }
+    },
+    "custom": "property"
   }
 }

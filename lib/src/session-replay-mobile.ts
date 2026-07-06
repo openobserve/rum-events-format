@@ -7,9 +7,11 @@ export const MobileSource = {
   Ios: 'ios',
   Flutter: 'flutter',
   ReactNative: 'react-native',
+  KotlinMultiplatform: 'kotlin-multiplatform',
+  Maui: 'maui',
 } as const
 
-export type MobileSource = typeof MobileSource[keyof typeof MobileSource]
+export type MobileSource = (typeof MobileSource)[keyof typeof MobileSource]
 
 export const RecordType: {
   FullSnapshot: SessionReplay.MobileFullSnapshotRecord['type']
@@ -27,7 +29,7 @@ export const RecordType: {
   VisualViewport: 8,
 } as const
 
-export type RecordType = typeof RecordType[keyof typeof RecordType]
+export type RecordType = (typeof RecordType)[keyof typeof RecordType]
 
 export const WireframeType: {
   Shape: SessionReplay.ShapeWireframe['type']
@@ -37,7 +39,7 @@ export const WireframeType: {
   Text: 'text',
 } as const
 
-export type WireframeType = typeof WireframeType[keyof typeof WireframeType]
+export type WireframeType = (typeof WireframeType)[keyof typeof WireframeType]
 
 export const IncrementalSource: {
   Mutation: SessionReplay.MobileMutationData['source']
@@ -51,4 +53,4 @@ export const IncrementalSource: {
   PointerInteraction: 9,
 } as const
 
-export type IncrementalSource = typeof IncrementalSource[keyof typeof IncrementalSource]
+export type IncrementalSource = (typeof IncrementalSource)[keyof typeof IncrementalSource]

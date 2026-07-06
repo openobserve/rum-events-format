@@ -12,12 +12,12 @@
   "view": {
     "id": "623d50fd-75cf-4025-97d2-e51ff94171f6",
     "referrer": "",
-    "url": "https://api.openobserve.ai/rum/explorer?live=1h&query=&tab=view",
+    "url": "https://app.datadoghq.com/rum/explorer?live=1h&query=&tab=view",
     "in_foreground": true
   },
   "error": {
     "id": "c9ecb486-2200-4b5d-9d53-040030c3765c",
-    "message": "XHR error POST https://api.openobserve.ai/api/v1/logs-analytics/aggregate?type=rum",
+    "message": "XHR error POST https://app.datadoghq.com/api/v1/logs-analytics/aggregate?type=rum",
     "source": "network",
     "stack": "Failed to load",
     "handling": "unhandled",
@@ -25,7 +25,7 @@
     "resource": {
       "method": "POST",
       "status_code": 0,
-      "url": "https://api.openobserve.ai/api/v1/logs-analytics/aggregate?type=rum"
+      "url": "https://app.datadoghq.com/api/v1/logs-analytics/aggregate?type=rum"
     },
     "causes": [
       {
@@ -38,21 +38,46 @@
         "message": "504 Gateway Timeout",
         "source": "network"
       }
-    ]
+    ],
+    "threads": [
+      {
+        "name": "Thread 0",
+        "crashed": true,
+        "stack": "Failed to load",
+        "state": "STOPPED"
+      }
+    ],
+    "binary_images": [
+      {
+        "uuid": "be3a5d82-cdd1-468d-9bc9-040030c3765c",
+        "name": "libc.so",
+        "is_system": false,
+        "arch": "arm7l"
+      }
+    ],
+    "meta": {
+      "code_type": "arm64",
+      "parent_process": "launchd_sim [31584]",
+      "incident_identifier": "DAA6280F-F6A4-45C2-BA15-FC81DA0B6A4B",
+      "process": "Example iOS [92909]",
+      "exception_type": "SIGABRT",
+      "exception_codes": "#0",
+      "path": "/Application/121E89DC-4F9B-425D-B484-C6CC79FF3CA8/Example iOS.app/Example iOS"
+    },
+    "was_truncated": false
   },
   "action": {
-    "id": [
-      "ae3a5d82-cdd1-468d-9bc9-3aa9e54d953c",
-      "be3a5d82-cdd1-468d-9bc9-3aa9e54d953c"
-    ]
+    "id": ["ae3a5d82-cdd1-468d-9bc9-3aa9e54d953c", "be3a5d82-cdd1-468d-9bc9-3aa9e54d953c"]
   },
   "feature_flags": {
     "feature_one": true,
     "feature_two": "foo",
     "feature_three": 2,
-    "feature_four": {
-      "foo": "bar"
-    }
+    "feature_four": { "foo": "bar" }
+  },
+  "connectivity": {
+    "status": "connected",
+    "effective_type": "4g"
   },
   "_oo": {
     "format_version": 2

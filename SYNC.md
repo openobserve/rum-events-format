@@ -16,24 +16,24 @@ validates emitted RUM/telemetry events against these schemas.
 Everything is expressible as codemod rules — there is **no hand-editing of schemas or generated
 files**, and **no functional patch series** (unlike browser-sdk).
 
-| Change | How |
-| --- | --- |
-| `_dd` event namespace → `_oo` | `rename-map.json` regex `\b_dd\b` → `_oo`, applied to `schemas/` + `samples/` |
-| `"openobserve"` added to the tracing-propagator enum | `rename-map.json` literal rule on `configuration-schema.json` |
-| Repository URL / package description | `rename-map.json` literals on `lib/package.json` |
-| LICENSE, NOTICE, README, `.github/` | fork-owned (`keep-ours.txt`), taken from the `openobserve` branch |
-| `lib/generated/**` (TS/JS types) | **regenerated** from the rebranded schemas by `yarn generate` — never hand-edited |
+| Change                                               | How                                                                               |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `_dd` event namespace → `_oo`                        | `rename-map.json` regex `\b_dd\b` → `_oo`, applied to `schemas/` + `samples/`     |
+| `"openobserve"` added to the tracing-propagator enum | `rename-map.json` literal rule on `configuration-schema.json`                     |
+| Repository URL / package description                 | `rename-map.json` literals on `lib/package.json`                                  |
+| LICENSE, NOTICE, README, `.github/`                  | fork-owned (`keep-ours.txt`), taken from the `openobserve` branch                 |
+| `lib/generated/**` (TS/JS types)                     | **regenerated** from the rebranded schemas by `yarn generate` — never hand-edited |
 
 ## Components
 
-| Piece | Purpose |
-| --- | --- |
-| `scripts/openobserve/rename-map.json` | Ordered rebrand rules |
-| `scripts/openobserve/rebrand.mjs` | Applies the map to every tracked schema/sample file |
-| `scripts/openobserve/keep-ours.txt` | Fork-owned paths taken from `openobserve` |
-| `scripts/openobserve/UPSTREAM_BASE` | Upstream commit the branch is currently built from |
+| Piece                                  | Purpose                                                     |
+| -------------------------------------- | ----------------------------------------------------------- |
+| `scripts/openobserve/rename-map.json`  | Ordered rebrand rules                                       |
+| `scripts/openobserve/rebrand.mjs`      | Applies the map to every tracked schema/sample file         |
+| `scripts/openobserve/keep-ours.txt`    | Fork-owned paths taken from `openobserve`                   |
+| `scripts/openobserve/UPSTREAM_BASE`    | Upstream commit the branch is currently built from          |
 | `scripts/openobserve/sync-upstream.sh` | Orchestrates the pipeline, produces `sync/upstream-<short>` |
-| `.github/workflows/sync-upstream.yml` | Monthly cron + manual dispatch; validates, opens the PR |
+| `.github/workflows/sync-upstream.yml`  | Monthly cron + manual dispatch; validates, opens the PR     |
 
 ## Running locally
 

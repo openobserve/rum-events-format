@@ -1,7 +1,7 @@
 {
   "name": "rum-events-format",
   "version": "1.0.0",
-  "description": "JSON schema of openobserve RUM events",
+  "description": "JSON schema of OpenObserve RUM events",
   "repository": "https://github.com/openobserve/rum-events-format.git",
   "private": true,
   "main": "cjs/src/index.js",
@@ -11,6 +11,7 @@
     "cjs",
     "esm",
     "rum",
+    "profiling",
     "session-replay",
     "session-replay-browser",
     "session-replay-mobile",

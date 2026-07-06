@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: "openobserve/browser-sdk"
+          repository: 'openobserve/browser-sdk'
 
       - uses: actions/setup-node@v3
         with:

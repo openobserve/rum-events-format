@@ -4,15 +4,15 @@
 /**
  * Schema of all properties of Session Replay
  */
-export declare type SessionReplay = Segment & SegmentMetadata & Record & FullSnapshotRecord & IncrementalSnapshotRecord & IncrementalData & MutationData & MutationPayload;
+export type SessionReplay = Segment & SegmentMetadata & Record & FullSnapshotRecord & IncrementalSnapshotRecord & IncrementalData & MutationData & MutationPayload;
 /**
  * Schema of a Session Replay data Segment.
  */
-export declare type Segment = BrowserSegment | MobileSegment;
+export type Segment = BrowserSegment | MobileSegment;
 /**
  * Browser-specific. Schema of a Session Replay data Segment.
  */
-export declare type BrowserSegment = BrowserSegmentMetadata & {
+export type BrowserSegment = BrowserSegmentMetadata & {
     /**
      * The records contained by this Segment.
      */
@@ -21,7 +21,7 @@ export declare type BrowserSegment = BrowserSegmentMetadata & {
 /**
  * Browser-specific. Schema of a Session Replay Segment metadata.
  */
-export declare type BrowserSegmentMetadata = SegmentContext & CommonSegmentMetadataSchema & {
+export type BrowserSegmentMetadata = SegmentContext & CommonSegmentMetadataSchema & {
     /**
      * The source of this record
      */
@@ -31,35 +31,290 @@ export declare type BrowserSegmentMetadata = SegmentContext & CommonSegmentMetad
 /**
  * The reason this Segment was created. For mobile there is only one possible value for this, which is always the default value.
  */
-export declare type CreationReason = 'init' | 'segment_duration_limit' | 'segment_bytes_limit' | 'view_change' | 'before_unload' | 'visibility_hidden' | 'page_frozen';
+export type CreationReason = 'init' | 'segment_duration_limit' | 'segment_bytes_limit' | 'view_change' | 'before_unload' | 'visibility_hidden' | 'page_frozen';
 /**
  * Browser-specific. Schema of a Session Replay Record.
  */
-export declare type BrowserRecord = BrowserFullSnapshotRecord | BrowserIncrementalSnapshotRecord | MetaRecord | FocusRecord | ViewEndRecord | VisualViewportRecord | FrustrationRecord;
+export type BrowserRecord = BrowserFullSnapshotRecord | BrowserIncrementalSnapshotRecord | MetaRecord | FocusRecord | ViewEndRecord | VisualViewportRecord | FrustrationRecord | BrowserChangeRecord;
 /**
- * Browser-specific. Schema of a Record type which contains the full snapshot of a screen.
+ * Browser-specific. Schema of a Record type which contains a full snapshot of a document.
  */
-export declare type BrowserFullSnapshotRecord = CommonRecordSchema & {
+export type BrowserFullSnapshotRecord = BrowserFullSnapshotV1Record | BrowserFullSnapshotChangeRecord;
+/**
+ * Browser-specific. Schema of a Record type which contains a full snapshot of a document in V1 format.
+ */
+export type BrowserFullSnapshotV1Record = SlotSupportedCommonRecordSchema & {
     /**
      * The type of this Record.
      */
     readonly type: 2;
+    readonly format?: SnapshotFormatV1;
     data: BrowserNode;
 };
 /**
+ * Schema of common properties for a Record event type that is supported by slots.
+ */
+export type SlotSupportedCommonRecordSchema = CommonRecordSchema & {
+    /**
+     * Unique ID of the slot that generated this record.
+     */
+    readonly slotId?: string;
+};
+/**
+ * The V1 snapshot format.
+ */
+export type SnapshotFormatV1 = 0;
+/**
  * Serialized node contained by this Record.
  */
-export declare type SerializedNodeWithId = {
+export type SerializedNodeWithId = {
     id: number;
 } & SerializedNode;
 /**
  * Serialized node contained by this Record.
  */
-export declare type SerializedNode = DocumentNode | DocumentFragmentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode;
+export type SerializedNode = DocumentNode | DocumentFragmentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode;
+/**
+ * Browser-specific. Schema of a Record type which contains a full snapshot of a document in Change format.
+ */
+export type BrowserFullSnapshotChangeRecord = SlotSupportedCommonRecordSchema & {
+    /**
+     * The type of this Record.
+     */
+    readonly type: 2;
+    readonly format: SnapshotFormatChange;
+    data: Change[];
+};
+/**
+ * The Change snapshot format.
+ */
+export type SnapshotFormatChange = 1;
+/**
+ * Browser-specific. Schema representing an individual change within a BrowserChangeData collection.
+ */
+export type Change = [0, ...AddStringChange[]] | [1, ...AddNodeChange[]] | [2, ...RemoveNodeChange[]] | [3, ...AttributeChange[]] | [4, ...TextChange[]] | [5, ...SizeChange[]] | [6, ...ScrollPositionChange[]] | [7, ...AddStyleSheetChange[]] | [8, ...AttachedStyleSheetsChange[]] | [9, ...MediaPlaybackStateChange[]] | [10, ...VisualViewportChange[]];
+/**
+ * Browser-specific. Schema representing the addition of a string to the string table.
+ */
+export type AddStringChange = string;
+/**
+ * Browser-specific. Schema representing the addition of a new node to the document.
+ */
+export type AddNodeChange = AddCDataSectionNodeChange | AddDocTypeNodeChange | AddDocumentNodeChange | AddDocumentFragmentNodeChange | AddElementNodeChange | AddShadowRootNodeChange | AddTextNodeChange;
+/**
+ * Schema representing the addition of a new #cdata-section node.
+ *
+ * @minItems 2
+ */
+export type AddCDataSectionNodeChange = [InsertionPoint, '#cdata-section' | StringReference];
+/**
+ * Browser-specific. Schema representing the insertion point of a node which is being added to the document.
+ */
+export type InsertionPoint = AppendChildInsertionPoint | InsertAfterPreviousInsertionPoint | InsertBeforeInsertionPoint | RootInsertionPoint;
+/**
+ * A positive integer insertion point. Inserting a node at positive integer N indicates that the new node's parent is the node with an id N lower than the new node, and that we should insert the new node at the end of its parent's child list, as if the DOM method appendChild() was being used.
+ */
+export type AppendChildInsertionPoint = number;
+/**
+ * A zero insertion point. Inserting a node at zero indicates that the new node should be inserted after the node with an id one lower than the new node, as if the DOM method after() is being used. Using a zero insertion point repeatedly is thus a quick way to insert a sequence of sibling elements.
+ */
+export type InsertAfterPreviousInsertionPoint = 0;
+/**
+ * A negative integer insertion point. Inserting a node at negative integer -N indicates that the new node's next sibling is the node with an id N lower than the new node, and that we should insert the new node before its next sibling, as if the DOM method insertBefore() was being used.
+ */
+export type InsertBeforeInsertionPoint = number;
+/**
+ * A null insertion point, indicating that the node should be inserted at the root of the document.
+ */
+export type RootInsertionPoint = null;
+/**
+ * Browser-specific. Schema representing a string, expressed as an index into the string table.
+ */
+export type StringReference = number;
+/**
+ * Schema representing the addition of a new #doctype node, using the format [#doctype, name, public ID, system ID].
+ *
+ * @minItems 5
+ */
+export type AddDocTypeNodeChange = [
+    InsertionPoint,
+    '#doctype' | StringReference,
+    StringOrStringReference,
+    StringOrStringReference,
+    StringOrStringReference
+];
+/**
+ * Browser-specific. Schema representing a string, either expressed as a literal or as an index into the string table.
+ */
+export type StringOrStringReference = string | StringReference;
+/**
+ * Schema representing the addition of a new #document node.
+ *
+ * @minItems 2
+ */
+export type AddDocumentNodeChange = [InsertionPoint, '#document' | StringReference];
+/**
+ * Schema representing the addition of a new #document-fragment node.
+ *
+ * @minItems 2
+ */
+export type AddDocumentFragmentNodeChange = [InsertionPoint, '#document-fragment' | StringReference];
+/**
+ * Schema representing the addition of a new element node.
+ *
+ * @minItems 2
+ */
+export type AddElementNodeChange = [InsertionPoint, string | StringReference, ...AttributeAssignment[]];
+/**
+ * Schema representing an assignment of a value to an attribute. The format is [name, value].
+ *
+ * @minItems 2
+ */
+export type AttributeAssignment = [StringOrStringReference, StringOrStringReference];
+/**
+ * Schema representing the addition of a new #shadow-root node.
+ *
+ * @minItems 2
+ */
+export type AddShadowRootNodeChange = [InsertionPoint, '#shadow-root' | StringReference];
+/**
+ * Schema representing the addition of a new #text node.
+ *
+ * @minItems 3
+ */
+export type AddTextNodeChange = [InsertionPoint, '#text' | StringReference, StringOrStringReference];
+/**
+ * Browser-specific. Schema representing the removal of a node from the document.
+ */
+export type RemoveNodeChange = number;
+/**
+ * Browser-specific. Schema representing a change to an node's attributes.
+ *
+ * @minItems 1
+ */
+export type AttributeChange = [NodeId, ...AttributeAssignmentOrDeletion[]];
+/**
+ * Browser-specific. Schema representing the ID of a DOM node.
+ */
+export type NodeId = number;
+/**
+ * Schema representing a change to an attribute, either by assignment of a new value or by deletion of the attribute.
+ */
+export type AttributeAssignmentOrDeletion = AttributeAssignment | AttributeDeletion;
+/**
+ * Schema representing the deletion of an attribute.
+ *
+ * @minItems 1
+ */
+export type AttributeDeletion = [StringOrStringReference];
+/**
+ * Browser-specific. Schema representing a change to the text content of a #text node.
+ *
+ * @minItems 2
+ */
+export type TextChange = [NodeId, StringOrStringReference];
+/**
+ * Browser-specific. Schema representing a change in an element's size.
+ *
+ * @minItems 3
+ */
+export type SizeChange = [NodeId, number, number];
+/**
+ * Browser-specific. Schema representing a scroll position change.
+ *
+ * @minItems 3
+ */
+export type ScrollPositionChange = [NodeId, number, number];
+/**
+ * Browser-specific. Schema representing the addition of a new stylesheet to the document.
+ */
+export type AddStyleSheetChange = StyleSheetSnapshot;
+/**
+ * Schema representing a snapshot of a CSS stylesheet.
+ *
+ * @minItems 1
+ */
+export type StyleSheetSnapshot = [
+    StyleSheetRules
+] | [StyleSheetRules, StyleSheetMediaList] | [StyleSheetRules, StyleSheetMediaList, boolean];
+/**
+ * Schema representing a CSS stylesheet's rules, encoded either as a single string or as an array containing a separate string for each rule.
+ */
+export type StyleSheetRules = StringOrStringReference | StringOrStringReference[];
+/**
+ * If non-empty, the list of medias for which this stylesheet is active. Defaults to the empty list if not present.
+ */
+export type StyleSheetMediaList = StringOrStringReference[];
+/**
+ * Browser-specific. Schema representing a change to the stylesheets attached to a DOM node. For <link> or <style> elements, which use classic CSSOM APIs, at most one stylesheet can be attached. For #document, #document-fragment, or #shadow-root nodes, which use the `adoptedStyleSheets` API, any number of stylesheets can be attached.
+ *
+ * @minItems 1
+ */
+export type AttachedStyleSheetsChange = [NodeId, ...StyleSheetId[]];
+/**
+ * Browser-specific. Schema representing the ID of a stylesheet.
+ */
+export type StyleSheetId = number;
+/**
+ * Browser-specific. Schema representing a change to the playback state of the media associated with an <audio> or <video> element.
+ *
+ * @minItems 2
+ */
+export type MediaPlaybackStateChange = [NodeId, PlaybackStatePlaying | PlaybackStatePaused];
+/**
+ * A playback state indicating that the associated media is playing.
+ */
+export type PlaybackStatePlaying = 0;
+/**
+ * A playback state indicating that the associated media is paused.
+ */
+export type PlaybackStatePaused = 1;
+/**
+ * Browser-specific. Schema representing a change to the visual viewport, defined in terms of the web platform VisualViewport API.
+ *
+ * @minItems 7
+ */
+export type VisualViewportChange = [
+    VisualViewportOffsetLeft,
+    VisualViewportOffsetTop,
+    VisualViewportPageLeft,
+    VisualViewportPageTop,
+    VisualViewportWidth,
+    VisualViewportHeight,
+    VisualViewportScale
+];
+/**
+ * The offset of the left edge of the visual viewport from the left edge of the layout viewport in CSS pixels.
+ */
+export type VisualViewportOffsetLeft = number;
+/**
+ * The offset of the top edge of the visual viewport from the top edge of the layout viewport in CSS pixels.
+ */
+export type VisualViewportOffsetTop = number;
+/**
+ * The x coordinate of the visual viewport relative to the initial containing block origin of the top edge in CSS pixels.
+ */
+export type VisualViewportPageLeft = number;
+/**
+ * The y coordinate of the visual viewport relative to the initial containing block origin of the top edge in CSS pixels.
+ */
+export type VisualViewportPageTop = number;
+/**
+ * The width of the visual viewport in CSS pixels.
+ */
+export type VisualViewportWidth = number;
+/**
+ * The height of the visual viewport in CSS pixels.
+ */
+export type VisualViewportHeight = number;
+/**
+ * The pinch-zoom scaling factor applied to the visual viewport.
+ */
+export type VisualViewportScale = number;
 /**
  * Browser-specific. Schema of a Record type which contains mutations of a screen.
  */
-export declare type BrowserIncrementalSnapshotRecord = CommonRecordSchema & {
+export type BrowserIncrementalSnapshotRecord = SlotSupportedCommonRecordSchema & {
     /**
      * The type of this Record.
      */
@@ -70,11 +325,11 @@ export declare type BrowserIncrementalSnapshotRecord = CommonRecordSchema & {
 /**
  * Browser-specific. Schema of a Session Replay IncrementalData type.
  */
-export declare type BrowserIncrementalData = BrowserMutationData | MousemoveData | MouseInteractionData | ScrollData | InputData | MediaInteractionData | StyleSheetRuleData | ViewportResizeData | PointerInteractionData;
+export type BrowserIncrementalData = BrowserMutationData | MousemoveData | MouseInteractionData | ScrollData | InputData | MediaInteractionData | StyleSheetRuleData | ViewportResizeData | PointerInteractionData;
 /**
  * Browser-specific. Schema of a MutationData.
  */
-export declare type BrowserMutationData = {
+export type BrowserMutationData = {
     /**
      * The source of this type of incremental data.
      */
@@ -83,7 +338,7 @@ export declare type BrowserMutationData = {
 /**
  * Browser-specific. Schema of a MutationPayload.
  */
-export declare type BrowserMutationPayload = {
+export type BrowserMutationPayload = {
     /**
      * Contains the newly added nodes.
      */
@@ -104,7 +359,7 @@ export declare type BrowserMutationPayload = {
 /**
  * Browser-specific. Schema of a MouseInteractionData.
  */
-export declare type MouseInteractionData = {
+export type MouseInteractionData = {
     /**
      * The source of this type of incremental data.
      */
@@ -113,7 +368,7 @@ export declare type MouseInteractionData = {
 /**
  * Browser-specific. Schema of a MouseInteraction.
  */
-export declare type MouseInteraction = {
+export type MouseInteraction = {
     /**
      * The type of MouseInteraction: 0=mouseup, 1=mousedown, 2=click, 3=contextmenu, 4=dblclick, 7=touchstart, 9=touchend
      */
@@ -143,7 +398,7 @@ export declare type MouseInteraction = {
 /**
  * Browser-specific. Schema of a ScrollData.
  */
-export declare type ScrollData = {
+export type ScrollData = {
     /**
      * The source of this type of incremental data.
      */
@@ -152,7 +407,7 @@ export declare type ScrollData = {
 /**
  * Browser-specific. Schema of an InputData.
  */
-export declare type InputData = {
+export type InputData = {
     /**
      * The source of this type of incremental data.
      */
@@ -165,7 +420,7 @@ export declare type InputData = {
 /**
  * Browser-specific. Schema of an InputState.
  */
-export declare type InputState = {
+export type InputState = {
     /**
      * Text value for this InputState.
      */
@@ -179,7 +434,7 @@ export declare type InputState = {
 /**
  * Browser-specific. Schema of a MediaInteractionData.
  */
-export declare type MediaInteractionData = {
+export type MediaInteractionData = {
     /**
      * The source of this type of incremental data.
      */
@@ -188,7 +443,7 @@ export declare type MediaInteractionData = {
 /**
  * Browser-specific. Schema of a StyleSheetRuleData.
  */
-export declare type StyleSheetRuleData = {
+export type StyleSheetRuleData = {
     /**
      * The source of this type of incremental data.
      */
@@ -197,7 +452,7 @@ export declare type StyleSheetRuleData = {
 /**
  * Schema of a ViewportResizeData.
  */
-export declare type ViewportResizeData = {
+export type ViewportResizeData = {
     /**
      * The source of this type of incremental data.
      */
@@ -206,7 +461,7 @@ export declare type ViewportResizeData = {
 /**
  * Schema of a PointerInteractionData.
  */
-export declare type PointerInteractionData = {
+export type PointerInteractionData = {
     /**
      * The source of this type of incremental data.
      */
@@ -215,7 +470,7 @@ export declare type PointerInteractionData = {
 /**
  * Schema of a Record which contains the screen properties.
  */
-export declare type MetaRecord = CommonRecordSchema & {
+export type MetaRecord = SlotSupportedCommonRecordSchema & {
     /**
      * The type of this Record.
      */
@@ -241,7 +496,7 @@ export declare type MetaRecord = CommonRecordSchema & {
 /**
  * Schema of a Record type which contains focus information.
  */
-export declare type FocusRecord = CommonRecordSchema & {
+export type FocusRecord = SlotSupportedCommonRecordSchema & {
     /**
      * The type of this Record.
      */
@@ -256,7 +511,7 @@ export declare type FocusRecord = CommonRecordSchema & {
 /**
  * Schema of a Record which signifies that view lifecycle ended.
  */
-export declare type ViewEndRecord = CommonRecordSchema & {
+export type ViewEndRecord = SlotSupportedCommonRecordSchema & {
     /**
      * The type of this Record.
      */
@@ -265,7 +520,7 @@ export declare type ViewEndRecord = CommonRecordSchema & {
 /**
  * Schema of a Record which signifies that the viewport properties have changed.
  */
-export declare type VisualViewportRecord = CommonRecordSchema & {
+export type VisualViewportRecord = SlotSupportedCommonRecordSchema & {
     data: {
         height: number;
         offsetLeft: number;
@@ -283,7 +538,7 @@ export declare type VisualViewportRecord = CommonRecordSchema & {
 /**
  * Schema of a Record which signifies a collection of frustration signals.
  */
-export declare type FrustrationRecord = CommonRecordSchema & {
+export type FrustrationRecord = SlotSupportedCommonRecordSchema & {
     /**
      * The type of this Record.
      */
@@ -303,9 +558,20 @@ export declare type FrustrationRecord = CommonRecordSchema & {
     };
 };
 /**
+ * Browser-specific. Schema of a record type which represents changes using a compact encoding. (Experimental; subject to change.)
+ */
+export type BrowserChangeRecord = SlotSupportedCommonRecordSchema & {
+    /**
+     * The type of this Record.
+     */
+    readonly type: 12;
+    data: Change[];
+    id?: number;
+};
+/**
  * Mobile-specific. Schema of a Session Replay data Segment.
  */
-export declare type MobileSegment = MobileSegmentMetadata & {
+export type MobileSegment = MobileSegmentMetadata & {
     /**
      * The records contained by this Segment.
      */
@@ -314,20 +580,20 @@ export declare type MobileSegment = MobileSegmentMetadata & {
 /**
  * Mobile-specific. Schema of a Session Replay Segment metadata.
  */
-export declare type MobileSegmentMetadata = SegmentContext & CommonSegmentMetadataSchema & {
+export type MobileSegmentMetadata = SegmentContext & CommonSegmentMetadataSchema & {
     /**
      * The source of this record
      */
-    source: 'android' | 'ios' | 'flutter' | 'react-native';
+    source: 'android' | 'ios' | 'flutter' | 'react-native' | 'kotlin-multiplatform' | 'maui';
 };
 /**
  * Mobile-specific. Schema of a Session Replay Record.
  */
-export declare type MobileRecord = MobileFullSnapshotRecord | MobileIncrementalSnapshotRecord | MetaRecord | FocusRecord | ViewEndRecord | VisualViewportRecord;
+export type MobileRecord = MobileFullSnapshotRecord | MobileIncrementalSnapshotRecord | MetaRecord | FocusRecord | ViewEndRecord | VisualViewportRecord;
 /**
  * Mobile-specific. Schema of a Record type which contains the full snapshot of a screen.
  */
-export declare type MobileFullSnapshotRecord = CommonRecordSchema & {
+export type MobileFullSnapshotRecord = CommonRecordSchema & {
     /**
      * The type of this Record.
      */
@@ -337,32 +603,37 @@ export declare type MobileFullSnapshotRecord = CommonRecordSchema & {
          * The Wireframes contained by this Record.
          */
         readonly wireframes: Wireframe[];
+        readonly compositionTree?: CompositionTree;
     };
 };
 /**
  * Schema of a Wireframe type.
  */
-export declare type Wireframe = ShapeWireframe | TextWireframe | ImageWireframe | PlaceholderWireframe;
+export type Wireframe = ShapeWireframe | TextWireframe | ImageWireframe | PlaceholderWireframe | WebviewWireframe;
 /**
  * Schema of all properties of a ShapeWireframe.
  */
-export declare type ShapeWireframe = CommonShapeWireframe & {
+export type ShapeWireframe = CommonShapeWireframe & {
     /**
      * The type of the wireframe.
      */
     readonly type: 'shape';
+    /**
+     * A globally unique and stable identifier for this UI element, computed as the hash of the element's path. Used to correlate wireframes with RUM action events.
+     */
+    readonly permanentId?: string;
 };
 /**
  * Schema of common properties for ShapeWireframe events type and all its sub - types.
  */
-export declare type CommonShapeWireframe = CommonWireframe & {
+export type CommonShapeWireframe = CommonWireframe & {
     shapeStyle?: ShapeStyle;
     border?: ShapeBorder;
 };
 /**
  * The style of this wireframe.
  */
-export declare type ShapeStyle = {
+export type ShapeStyle = {
     /**
      * The background color for this wireframe as a String hexadecimal. Follows the #RRGGBBAA color format with the alpha value as optional. The default value is #FFFFFF00.
      */
@@ -379,7 +650,7 @@ export declare type ShapeStyle = {
 /**
  * The border properties of this wireframe. The default value is null (no-border).
  */
-export declare type ShapeBorder = {
+export type ShapeBorder = {
     /**
      * The border color as a String hexadecimal. Follows the #RRGGBBAA color format with the alpha value as optional.
      */
@@ -392,7 +663,7 @@ export declare type ShapeBorder = {
 /**
  * Schema of all properties of a TextWireframe.
  */
-export declare type TextWireframe = CommonShapeWireframe & {
+export type TextWireframe = CommonShapeWireframe & {
     /**
      * The type of the wireframe.
      */
@@ -403,11 +674,15 @@ export declare type TextWireframe = CommonShapeWireframe & {
     text: string;
     textStyle: TextStyle;
     textPosition?: TextPosition;
+    /**
+     * A globally unique and stable identifier for this UI element, computed as the hash of the element's path. Used to correlate wireframes with RUM action events.
+     */
+    readonly permanentId?: string;
 };
 /**
  * Schema of all properties of a TextStyle.
  */
-export declare type TextStyle = {
+export type TextStyle = {
     /**
      * The preferred font family collection, ordered by preference and formatted as a String list: e.g. Century Gothic, Verdana, sans-serif
      */
@@ -420,11 +695,15 @@ export declare type TextStyle = {
      * The font color as a string hexadecimal. Follows the #RRGGBBAA color format with the alpha value as optional.
      */
     readonly color: string;
+    /**
+     * Defines how text should be truncated when it exceeds the wireframe bounds. If omitted, text wraps naturally.
+     */
+    readonly truncationMode?: 'clip' | 'head' | 'tail' | 'middle';
 };
 /**
  * Schema of all properties of a TextPosition.
  */
-export declare type TextPosition = {
+export type TextPosition = {
     readonly padding?: {
         /**
          * The top padding in pixels. The default value is 0.
@@ -457,7 +736,7 @@ export declare type TextPosition = {
 /**
  * Schema of all properties of a ImageWireframe.
  */
-export declare type ImageWireframe = CommonShapeWireframe & {
+export type ImageWireframe = CommonShapeWireframe & {
     /**
      * The type of the wireframe.
      */
@@ -467,6 +746,10 @@ export declare type ImageWireframe = CommonShapeWireframe & {
      */
     base64?: string;
     /**
+     * Unique identifier of the image resource
+     */
+    resourceId?: string;
+    /**
      * MIME type of the image file
      */
     mimeType?: string;
@@ -474,11 +757,15 @@ export declare type ImageWireframe = CommonShapeWireframe & {
      * Flag describing an image wireframe that should render an empty state placeholder
      */
     isEmpty?: boolean;
+    /**
+     * A globally unique and stable identifier for this UI element, computed as the hash of the element's path. Used to correlate wireframes with RUM action events.
+     */
+    readonly permanentId?: string;
 };
 /**
  * Schema of all properties of a PlaceholderWireframe.
  */
-export declare type PlaceholderWireframe = CommonWireframe & {
+export type PlaceholderWireframe = CommonWireframe & {
     /**
      * The type of the wireframe.
      */
@@ -487,11 +774,40 @@ export declare type PlaceholderWireframe = CommonWireframe & {
      * Label of the placeholder
      */
     label?: string;
+    /**
+     * A globally unique and stable identifier for this UI element, computed as the hash of the element's path. Used to correlate wireframes with RUM action events.
+     */
+    readonly permanentId?: string;
 };
+/**
+ * Schema of all properties of a WebviewWireframe.
+ */
+export type WebviewWireframe = CommonShapeWireframe & {
+    /**
+     * The type of the wireframe.
+     */
+    readonly type: 'webview';
+    /**
+     * Unique Id of the slot containing this webview.
+     */
+    readonly slotId: string;
+    /**
+     * Whether this webview is visible or not.
+     */
+    readonly isVisible?: boolean;
+    /**
+     * A globally unique and stable identifier for this UI element, computed as the hash of the element's path. Used to correlate wireframes with RUM action events.
+     */
+    readonly permanentId?: string;
+};
+/**
+ * A rendering modifier applied to the composed layer output.
+ */
+export type CompositionLayerModifier = CompositionLayerClipModifier | CompositionLayerOpacityModifier | CompositionLayerColorMatrixModifier | CompositionLayerGaussianBlurModifier | CompositionLayerBrightnessBiasModifier | CompositionLayerSaturateModifier | CompositionLayerBackgroundMaterialModifier;
 /**
  * Mobile-specific. Schema of a Record type which contains mutations of a screen.
  */
-export declare type MobileIncrementalSnapshotRecord = CommonRecordSchema & {
+export type MobileIncrementalSnapshotRecord = CommonRecordSchema & {
     /**
      * The type of this Record.
      */
@@ -501,52 +817,24 @@ export declare type MobileIncrementalSnapshotRecord = CommonRecordSchema & {
 /**
  * Mobile-specific. Schema of a Session Replay IncrementalData type.
  */
-export declare type MobileIncrementalData = MobileMutationData | TouchData | ViewportResizeData | PointerInteractionData;
+export type MobileIncrementalData = MobileMutationData | TouchData | ViewportResizeData | PointerInteractionData | CompositionTreeMutationData;
 /**
  * Mobile-specific. Schema of a MutationData.
  */
-export declare type MobileMutationData = {
+export type MobileMutationData = {
     /**
      * The source of this type of incremental data.
      */
     readonly source: 0;
 } & MobileMutationPayload;
 /**
- * Mobile-specific. Schema of a MutationPayload.
- */
-export declare type MobileMutationPayload = {
-    /**
-     * Contains the newly added wireframes.
-     */
-    readonly adds?: {
-        /**
-         * The previous wireframe id next or after which this new wireframe is drawn or attached to, respectively.
-         */
-        previousId?: number;
-        wireframe: Wireframe;
-    }[];
-    /**
-     * Contains the removed wireframes as an array of ids.
-     */
-    readonly removes?: {
-        /**
-         * The id of the wireframe that needs to be removed.
-         */
-        id: number;
-    }[];
-    /**
-     * Contains the updated wireframes mutations.
-     */
-    readonly updates?: WireframeUpdateMutation[];
-};
-/**
  * Schema of a WireframeUpdateMutation type.
  */
-export declare type WireframeUpdateMutation = TextWireframeUpdate | ShapeWireframeUpdate | ImageWireframeUpdate | PlaceholderWireframeUpdate;
+export type WireframeUpdateMutation = TextWireframeUpdate | ShapeWireframeUpdate | ImageWireframeUpdate | PlaceholderWireframeUpdate | WebviewWireframeUpdate;
 /**
  * Schema of all properties of a TextWireframeUpdate.
  */
-export declare type TextWireframeUpdate = CommonShapeWireframeUpdate & {
+export type TextWireframeUpdate = CommonShapeWireframeUpdate & {
     /**
      * The type of the wireframe.
      */
@@ -561,14 +849,14 @@ export declare type TextWireframeUpdate = CommonShapeWireframeUpdate & {
 /**
  * Schema of common properties for ShapeWireframeUpdate events type and all its sub - types.
  */
-export declare type CommonShapeWireframeUpdate = CommonWireframeUpdate & {
+export type CommonShapeWireframeUpdate = CommonWireframeUpdate & {
     shapeStyle?: ShapeStyle;
     border?: ShapeBorder;
 };
 /**
  * Schema of a ShapeWireframeUpdate.
  */
-export declare type ShapeWireframeUpdate = CommonShapeWireframeUpdate & {
+export type ShapeWireframeUpdate = CommonShapeWireframeUpdate & {
     /**
      * The type of the wireframe.
      */
@@ -577,7 +865,7 @@ export declare type ShapeWireframeUpdate = CommonShapeWireframeUpdate & {
 /**
  * Schema of all properties of a ImageWireframeUpdate.
  */
-export declare type ImageWireframeUpdate = CommonShapeWireframeUpdate & {
+export type ImageWireframeUpdate = CommonShapeWireframeUpdate & {
     /**
      * The type of the wireframe.
      */
@@ -586,6 +874,10 @@ export declare type ImageWireframeUpdate = CommonShapeWireframeUpdate & {
      * base64 representation of the image. Not required as the ImageWireframe can be initialised without any base64
      */
     base64?: string;
+    /**
+     * Unique identifier of the image resource
+     */
+    resourceId?: string;
     /**
      * MIME type of the image file
      */
@@ -598,7 +890,7 @@ export declare type ImageWireframeUpdate = CommonShapeWireframeUpdate & {
 /**
  * Schema of all properties of a PlaceholderWireframe.
  */
-export declare type PlaceholderWireframeUpdate = CommonWireframeUpdate & {
+export type PlaceholderWireframeUpdate = CommonWireframeUpdate & {
     /**
      * The type of the wireframe.
      */
@@ -609,9 +901,26 @@ export declare type PlaceholderWireframeUpdate = CommonWireframeUpdate & {
     label?: string;
 };
 /**
+ * Schema of all properties of a WebviewWireframeUpdate.
+ */
+export type WebviewWireframeUpdate = CommonShapeWireframeUpdate & {
+    /**
+     * The type of the wireframe.
+     */
+    readonly type: 'webview';
+    /**
+     * Unique Id of the slot containing this webview.
+     */
+    readonly slotId: string;
+    /**
+     * Whether this webview is visible or not.
+     */
+    readonly isVisible?: boolean;
+};
+/**
  * Schema of a TouchData.
  */
-export declare type TouchData = {
+export type TouchData = {
     /**
      * The source of this type of incremental data.
      */
@@ -641,31 +950,31 @@ export declare type TouchData = {
 /**
  * Schema of a Session Replay SegmentMetadata.
  */
-export declare type SegmentMetadata = BrowserSegmentMetadata | MobileSegmentMetadata;
+export type SegmentMetadata = BrowserSegmentMetadata | MobileSegmentMetadata;
 /**
  * Schema of a Session Replay Record.
  */
-export declare type Record = BrowserRecord | MobileRecord;
+export type Record = BrowserRecord | MobileRecord;
 /**
  * Schema of a Record type which contains the full snapshot of a screen.
  */
-export declare type FullSnapshotRecord = BrowserFullSnapshotRecord | MobileFullSnapshotRecord;
+export type FullSnapshotRecord = BrowserFullSnapshotRecord | MobileFullSnapshotRecord;
 /**
  * Schema of a Record type which contains mutations of a screen.
  */
-export declare type IncrementalSnapshotRecord = BrowserIncrementalSnapshotRecord | MobileIncrementalSnapshotRecord;
+export type IncrementalSnapshotRecord = BrowserIncrementalSnapshotRecord | MobileIncrementalSnapshotRecord;
 /**
  * Schema of a Session Replay IncrementalData type.
  */
-export declare type IncrementalData = BrowserIncrementalData | MobileIncrementalData;
+export type IncrementalData = BrowserIncrementalData | MobileIncrementalData;
 /**
  * Schema of a MutationData.
  */
-export declare type MutationData = BrowserMutationData | MobileMutationData;
+export type MutationData = BrowserMutationData | MobileMutationData;
 /**
  * Schema of a MutationPayload.
  */
-export declare type MutationPayload = BrowserMutationPayload | MobileMutationPayload;
+export type MutationPayload = BrowserMutationPayload | MobileMutationPayload;
 /**
  * Schema of a Session Replay Segment context.
  */
@@ -1112,6 +1421,213 @@ export interface WireframeClip {
     readonly right?: number;
 }
 /**
+ * Optional composition tree describing the rendering hierarchy. When present, the player uses this tree for rendering order and group operations.
+ */
+export interface CompositionTree {
+    root: CompositionLayer;
+    /**
+     * Non-root composition layers referenced by the tree.
+     */
+    readonly layers?: CompositionLayer[];
+}
+/**
+ * A rendering group that groups child wireframes and child layers. Does not draw pixels itself. Ordered rendering modifiers and compositing are applied to its composed output.
+ */
+export interface CompositionLayer {
+    /**
+     * Stable layer identifier, persistent throughout the view lifetime.
+     */
+    readonly id: number;
+    /**
+     * The position in pixels on the X axis of the layer in absolute coordinates. Uses the same coordinate space as mobile wireframes.
+     */
+    readonly x: number;
+    /**
+     * The position in pixels on the Y axis of the layer in absolute coordinates. Uses the same coordinate space as mobile wireframes.
+     */
+    readonly y: number;
+    /**
+     * The width in pixels of the layer. Uses the same coordinate space as mobile wireframes.
+     */
+    readonly width: number;
+    /**
+     * The height in pixels of the layer. Uses the same coordinate space as mobile wireframes.
+     */
+    readonly height: number;
+    /**
+     * Ordered back-to-front references to child wireframes or child layers.
+     */
+    readonly children: CompositionLayerChild[];
+    /**
+     * Ordered list of rendering modifiers applied to the composed layer output in array order.
+     */
+    readonly modifiers?: CompositionLayerModifier[];
+    /**
+     * Operation used when compositing the rendered group into its parent.
+     */
+    readonly compositeOperation?: 'sourceOver' | 'destinationIn' | 'plusDarker';
+}
+/**
+ * A reference to a child wireframe or child layer in a composition layer.
+ */
+export interface CompositionLayerChild {
+    /**
+     * The type of the child reference.
+     */
+    readonly type: 'wireframe' | 'layer';
+    /**
+     * The id of the referenced wireframe or layer.
+     */
+    readonly id: number;
+}
+/**
+ * Geometric clipping applied to the composed layer output, in coordinates local to the layer rectangle.
+ */
+export interface CompositionLayerClipModifier {
+    /**
+     * The type of the modifier.
+     */
+    readonly type: 'clip';
+    /**
+     * SVG path string defining the clip region, in coordinates local to the layer rectangle.
+     */
+    readonly path: string;
+    /**
+     * Path fill rule. Defaults to 'nonzero'.
+     */
+    readonly fillRule?: 'nonzero' | 'evenodd';
+}
+/**
+ * Opacity applied to the composed layer output at this point in the modifier order.
+ */
+export interface CompositionLayerOpacityModifier {
+    /**
+     * The type of the modifier.
+     */
+    readonly type: 'opacity';
+    /**
+     * Opacity value from 0 to 1.
+     */
+    readonly value: number;
+}
+/**
+ * Color transformation using a 4x5 matrix applied to the composed layer output.
+ */
+export interface CompositionLayerColorMatrixModifier {
+    /**
+     * The type of the modifier.
+     */
+    readonly type: 'colorMatrix';
+    /**
+     * 4x5 color matrix encoded as 20 numbers in row-major order. Input and output color channels are normalized to [0, 1]. The transform for each output channel is: R' = m[0]*R + m[1]*G + m[2]*B + m[3]*A + m[4], G' = m[5]*R + m[6]*G + m[7]*B + m[8]*A + m[9], B' = m[10]*R + m[11]*G + m[12]*B + m[13]*A + m[14], A' = m[15]*R + m[16]*G + m[17]*B + m[18]*A + m[19]. Each output channel is clamped to [0, 1] after evaluation.
+     *
+     * @minItems 20
+     * @maxItems 20
+     */
+    readonly matrix: [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number
+    ];
+}
+/**
+ * Gaussian blur applied to the composed layer output.
+ */
+export interface CompositionLayerGaussianBlurModifier {
+    /**
+     * The type of the modifier.
+     */
+    readonly type: 'gaussianBlur';
+    /**
+     * Gaussian blur radius.
+     */
+    readonly radius: number;
+}
+/**
+ * Adds a signed brightness bias to the rendered layer contents.
+ */
+export interface CompositionLayerBrightnessBiasModifier {
+    /**
+     * The type of the modifier.
+     */
+    readonly type: 'brightnessBias';
+    /**
+     * Brightness bias from -1 to 1 added to each normalized RGB channel (alpha is unchanged). 0 leaves content unchanged. Positive values brighten; negative values darken. Each channel is clamped to [0, 1] after the bias is applied.
+     */
+    readonly value: number;
+}
+/**
+ * Applies a saturation adjustment to the rendered layer contents.
+ */
+export interface CompositionLayerSaturateModifier {
+    /**
+     * The type of the modifier.
+     */
+    readonly type: 'saturate';
+    /**
+     * Saturation multiplier. 1 leaves content unchanged. 0 removes saturation.
+     */
+    readonly value: number;
+}
+/**
+ * Represents a platform background material effect captured as layer rendering state.
+ */
+export interface CompositionLayerBackgroundMaterialModifier {
+    /**
+     * The type of the modifier.
+     */
+    readonly type: 'backgroundMaterial';
+    /**
+     * Material kind.
+     */
+    readonly kind: 'glass';
+}
+/**
+ * Mobile-specific. Schema of a MutationPayload.
+ */
+export interface MobileMutationPayload {
+    /**
+     * Contains the newly added wireframes.
+     */
+    readonly adds: {
+        /**
+         * The previous wireframe id next or after which this new wireframe is drawn or attached to, respectively.
+         */
+        previousId?: number;
+        wireframe: Wireframe;
+    }[];
+    /**
+     * Contains the removed wireframes as an array of ids.
+     */
+    readonly removes: {
+        /**
+         * The id of the wireframe that needs to be removed.
+         */
+        id: number;
+    }[];
+    /**
+     * Contains the updated wireframes mutations.
+     */
+    readonly updates: WireframeUpdateMutation[];
+}
+/**
  * Schema of common properties for WireframeUpdate events type.
  */
 export interface CommonWireframeUpdate {
@@ -1136,4 +1652,63 @@ export interface CommonWireframeUpdate {
      */
     readonly height?: number;
     clip?: WireframeClip;
+}
+/**
+ * Mobile-specific. Incremental data carrying composition tree layer mutations.
+ */
+export interface CompositionTreeMutationData {
+    /**
+     * The source of this type of incremental data.
+     */
+    readonly source: 10;
+    root?: CompositionLayer;
+    /**
+     * Full layer definitions for newly added layers.
+     */
+    readonly adds?: CompositionLayer[];
+    /**
+     * Ids of layer definitions to remove. Removing a referenced layer also requires updating the parent or root child list.
+     */
+    readonly removes?: number[];
+    /**
+     * Sparse updates for existing layers.
+     */
+    readonly updates?: CompositionLayerUpdate[];
+}
+/**
+ * Sparse update for a composition layer. Omitted fields are unchanged.
+ */
+export interface CompositionLayerUpdate {
+    /**
+     * The id of the layer to update.
+     */
+    readonly id: number;
+    /**
+     * Updated X position in absolute coordinates. Uses the same coordinate space as mobile wireframes.
+     */
+    readonly x?: number;
+    /**
+     * Updated Y position in absolute coordinates. Uses the same coordinate space as mobile wireframes.
+     */
+    readonly y?: number;
+    /**
+     * Updated width in pixels. Uses the same coordinate space as mobile wireframes.
+     */
+    readonly width?: number;
+    /**
+     * Updated height in pixels. Uses the same coordinate space as mobile wireframes.
+     */
+    readonly height?: number;
+    /**
+     * When present, replaces the full child list for this layer.
+     */
+    readonly children?: CompositionLayerChild[];
+    /**
+     * When present, replaces the full modifier list for this layer.
+     */
+    readonly modifiers?: CompositionLayerModifier[];
+    /**
+     * Updated composite operation for this layer.
+     */
+    readonly compositeOperation?: 'sourceOver' | 'destinationIn' | 'plusDarker';
 }

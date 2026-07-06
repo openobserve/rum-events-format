@@ -9,10 +9,10 @@
       "$ref": "_common-schema.json"
     },
     {
-      "required": [
-        "type",
-        "action"
-      ],
+      "$ref": "_view-container-schema.json"
+    },
+    {
+      "required": ["type", "action"],
       "properties": {
         "type": {
           "type": "string",
@@ -23,22 +23,12 @@
         "action": {
           "type": "object",
           "description": "Action properties",
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "properties": {
             "type": {
               "type": "string",
               "description": "Type of the action",
-              "enum": [
-                "custom",
-                "click",
-                "tap",
-                "scroll",
-                "swipe",
-                "application_start",
-                "back"
-              ],
+              "enum": ["custom", "click", "tap", "scroll", "swipe", "application_start", "back"],
               "readOnly": true
             },
             "id": {
@@ -56,9 +46,7 @@
             "target": {
               "type": "object",
               "description": "Action target properties",
-              "required": [
-                "name"
-              ],
+              "required": ["name"],
               "properties": {
                 "name": {
                   "type": "string",
@@ -71,9 +59,7 @@
             "frustration": {
               "type": "object",
               "description": "Action frustration properties",
-              "required": [
-                "type"
-              ],
+              "required": ["type"],
               "properties": {
                 "type": {
                   "type": "array",
@@ -81,13 +67,7 @@
                   "readOnly": true,
                   "items": {
                     "type": "string",
-                    "enum": [
-                      "rage_click",
-                      "dead_click",
-                      "error_click",
-                      "rage_tap",
-                      "error_tap"
-                    ]
+                    "enum": ["rage_click", "dead_click", "error_click", "rage_tap", "error_tap"]
                   }
                 }
               },
@@ -96,9 +76,7 @@
             "error": {
               "type": "object",
               "description": "Properties of the errors of the action",
-              "required": [
-                "count"
-              ],
+              "required": ["count"],
               "properties": {
                 "count": {
                   "type": "integer",
@@ -112,9 +90,7 @@
             "crash": {
               "type": "object",
               "description": "Properties of the crashes of the action",
-              "required": [
-                "count"
-              ],
+              "required": ["count"],
               "properties": {
                 "count": {
                   "type": "integer",
@@ -128,9 +104,7 @@
             "long_task": {
               "type": "object",
               "description": "Properties of the long tasks of the action",
-              "required": [
-                "count"
-              ],
+              "required": ["count"],
               "properties": {
                 "count": {
                   "type": "integer",
@@ -144,9 +118,7 @@
             "resource": {
               "type": "object",
               "description": "Properties of the resources of the action",
-              "required": [
-                "count"
-              ],
+              "required": ["count"],
               "properties": {
                 "count": {
                   "type": "integer",
@@ -184,10 +156,7 @@
                 "position": {
                   "type": "object",
                   "description": "Action position properties",
-                  "required": [
-                    "x",
-                    "y"
-                  ],
+                  "required": ["x", "y"],
                   "properties": {
                     "x": {
                       "type": "integer",
@@ -211,6 +180,11 @@
                       "description": "CSS selector path of the target element",
                       "readOnly": true
                     },
+                    "composed_path_selector": {
+                      "type": "string",
+                      "description": "Selector data based on the click event composed path",
+                      "readOnly": true
+                    },
                     "width": {
                       "type": "integer",
                       "description": "Width of the target element (in pixels)",
@@ -220,8 +194,26 @@
                       "type": "integer",
                       "description": "Height of the target element (in pixels)",
                       "readOnly": true
+                    },
+                    "permanent_id": {
+                      "type": "string",
+                      "description": "Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path. Used to correlate actions with mobile session replay wireframes.",
+                      "readOnly": true
                     }
                   }
+                },
+                "name_source": {
+                  "type": "string",
+                  "description": "The strategy of how the auto click action name is computed",
+                  "enum": [
+                    "custom_attribute",
+                    "mask_placeholder",
+                    "standard_attribute",
+                    "text_content",
+                    "mask_disallowed",
+                    "blank"
+                  ],
+                  "readOnly": false
                 }
               },
               "readOnly": true
