@@ -12,7 +12,7 @@
   "view": {
     "id": "623d50fd-75cf-4025-97d2-e51ff94171f6",
     "referrer": "",
-    "url": "https://api.openobserve.ai/rum/explorer?live=1h&query=&tab=view"
+    "url": "https://app.datadoghq.com/rum/explorer?live=1h&query=&tab=view"
   },
   "action": {
     "type": "click",
@@ -31,9 +31,7 @@
       "count": 1
     },
     "frustration": {
-      "type": [
-        "rage_click"
-      ]
+      "type": ["rage_click"]
     }
   },
   "_oo": {
@@ -44,6 +42,7 @@
         "width": 10,
         "height": 10
       },
+      "name_source": "custom_attribute",
       "position": {
         "x": 5,
         "y": 5

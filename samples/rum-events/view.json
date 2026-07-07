@@ -13,8 +13,10 @@
   "view": {
     "id": "623d50fd-75cf-4025-97d2-e51ff94171f6",
     "referrer": "",
-    "url": "https://api.openobserve.ai/rum/explorer?live=1h&query=&tab=view",
+    "url": "https://app.datadoghq.com/rum/explorer?live=1h&query=&tab=view",
     "loading_time": 4115295000,
+    "network_settled_time": 10000,
+    "interaction_to_next_view_time": 20000,
     "loading_type": "initial_load",
     "time_spent": 245512755000,
     "first_contentful_paint": 420725000,
@@ -23,6 +25,16 @@
     "dom_interactive": 906695000,
     "load_event": 2154370000,
     "interaction_to_next_paint": 20000000,
+    "interaction_to_next_paint_time": 20000000,
+    "interaction_to_next_paint_target_selector": "#foo",
+    "largest_contentful_paint": 20000000,
+    "largest_contentful_paint_target_selector": "#foo",
+    "first_input_delay": 20000000,
+    "first_input_time": 20000000,
+    "first_input_target_selector": "#foo",
+    "cumulative_layout_shift": 0.1,
+    "cumulative_layout_shift_time": 2000,
+    "cumulative_layout_shift_target_selector": "#foo",
     "custom_timings": {
       "user-timing": 2154570000
     },
@@ -42,15 +54,46 @@
       "count": 9
     },
     "in_foreground_periods": [
-      {
-        "start": 1345678,
-        "duration": 67
+      { "start": 1345678, "duration": 67 },
+      { "start": 1645678, "duration": 67 }
+    ],
+    "performance": {
+      "cls": {
+        "score": 0.1,
+        "timestamp": 2000,
+        "target_selector": "#foo",
+        "previous_rect": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "current_rect": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
       },
-      {
-        "start": 1645678,
-        "duration": 67
+      "fcp": {
+        "timestamp": 420725000
+      },
+      "fid": {
+        "duration": 20000000,
+        "timestamp": 20000000,
+        "target_selector": "#foo"
+      },
+      "inp": {
+        "duration": 20000000,
+        "timestamp": 20000000,
+        "target_selector": "#foo"
+      },
+      "lcp": {
+        "timestamp": 20000000,
+        "target_selector": "#foo",
+        "resource_url": "https://example.com/foo.jpg"
       }
-    ]
+    }
   },
   "_oo": {
     "document_version": 9,
@@ -61,9 +104,16 @@
         "start": 1345678
       }
     ],
+    "cls": {
+      "device_pixel_ratio": 2
+    },
     "configuration": {
       "session_sample_rate": 12.45,
-      "session_replay_sample_rate": 100
+      "session_replay_sample_rate": 100,
+      "start_session_replay_recording_manually": true
+    },
+    "profiling": {
+      "status": "running"
     }
   },
   "synthetics": {
@@ -77,7 +127,10 @@
     "type": "tablet",
     "name": "iPad",
     "model": "iPad",
-    "brand": "Apple"
+    "brand": "Apple",
+    "locale": "en-US",
+    "locales": ["en-US", "fr-FR"],
+    "time_zone": "Europe/Paris"
   },
   "os": {
     "name": "iOS",
@@ -88,9 +141,7 @@
     "feature_one": true,
     "feature_two": "foo",
     "feature_three": 2,
-    "feature_four": {
-      "foo": "bar"
-    }
+    "feature_four": { "foo": "bar" }
   },
   "privacy": {
     "replay_level": "mask"

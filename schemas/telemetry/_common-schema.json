@@ -4,21 +4,12 @@
   "title": "CommonTelemetryProperties",
   "type": "object",
   "description": "Schema of common properties of Telemetry events",
-  "required": [
-    "_oo",
-    "type",
-    "date",
-    "service",
-    "source",
-    "version"
-  ],
+  "required": ["_oo", "type", "date", "service", "source", "version"],
   "properties": {
     "_oo": {
       "type": "object",
       "description": "Internal properties",
-      "required": [
-        "format_version"
-      ],
+      "required": ["format_version"],
       "properties": {
         "format_version": {
           "type": "integer",
@@ -51,7 +42,12 @@
         "ios",
         "browser",
         "flutter",
-        "react-native"
+        "react-native",
+        "unity",
+        "kotlin-multiplatform",
+        "electron",
+        "rum-cpp",
+        "maui"
       ],
       "readOnly": true
     },
@@ -62,9 +58,7 @@
     "application": {
       "type": "object",
       "description": "Application properties",
-      "required": [
-        "id"
-      ],
+      "required": ["id"],
       "properties": {
         "id": {
           "type": "string",
@@ -77,9 +71,7 @@
     "session": {
       "type": "object",
       "description": "Session properties",
-      "required": [
-        "id"
-      ],
+      "required": ["id"],
       "properties": {
         "id": {
           "type": "string",
@@ -91,9 +83,7 @@
     "view": {
       "type": "object",
       "description": "View properties",
-      "required": [
-        "id"
-      ],
+      "required": ["id"],
       "properties": {
         "id": {
           "type": "string",
@@ -105,16 +95,32 @@
     "action": {
       "type": "object",
       "description": "Action properties",
-      "required": [
-        "id"
-      ],
+      "required": ["id"],
       "properties": {
         "id": {
-          "type": "string",
           "description": "UUID of the action",
-          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+          "readOnly": true,
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+              }
+            }
+          ]
         }
       }
+    },
+    "effective_sample_rate": {
+      "type": "number",
+      "description": "The actual percentage of telemetry usage per event",
+      "minimum": 0,
+      "maximum": 100
     },
     "experimental_features": {
       "type": "array",
@@ -123,6 +129,63 @@
         "type": "string"
       },
       "readOnly": true
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "device": {
+          "type": "object",
+          "description": "Device properties",
+          "properties": {
+            "architecture": {
+              "type": "string",
+              "description": "Architecture of the device"
+            },
+            "brand": {
+              "type": "string",
+              "description": "Brand of the device"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model of the device"
+            },
+            "logical_cpu_count": {
+              "type": "number",
+              "description": "Number of logical CPU cores available for scheduling on the device at runtime, as reported by the operating system.",
+              "readOnly": true
+            },
+            "total_ram": {
+              "type": "number",
+              "description": "Total RAM in megabytes",
+              "readOnly": true
+            },
+            "is_low_ram": {
+              "type": "boolean",
+              "description": "Whether the device is considered a low RAM device (Android)",
+              "readOnly": true
+            }
+          }
+        },
+        "os": {
+          "type": "object",
+          "description": "OS properties",
+          "properties": {
+            "build": {
+              "type": "string",
+              "description": "Build of the OS"
+            },
+            "name": {
+              "type": "string",
+              "description": "Name of the OS"
+            },
+            "version": {
+              "type": "string",
+              "description": "Version of the OS"
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -12,7 +12,7 @@
   "view": {
     "id": "623d50fd-75cf-4025-97d2-e51ff94171f6",
     "referrer": "",
-    "url": "https://api.openobserve.ai/rum/explorer?live=1h&query=&tab=view"
+    "url": "https://app.datadoghq.com/rum/explorer?live=1h&query=&tab=view"
   },
   "long_task": {
     "id": "5fa9630e-54c0-4050-8a67-bb1cd575bd26",
@@ -21,7 +21,11 @@
   "action": {
     "id": "ae3a5d82-cdd1-468d-9bc9-3aa9e54d953c"
   },
+
   "_oo": {
-    "format_version": 2
+    "format_version": 2,
+    "profiling": {
+      "status": "running"
+    }
   }
 }

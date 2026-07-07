@@ -1,7 +1,7 @@
 import type { IncrementalSource as BrowserIncrementalSource, RecordType as BrowserRecordType } from './session-replay-browser';
 import type { IncrementalSource as MobileIncrementalSource, RecordType as MobileRecordType } from './session-replay-mobile';
 export * from '../generated/sessionReplay';
-export { BrowserSource, NodeType, IncrementalSource as BrowserIncrementalSource, MouseInteractionType, MediaInteractionType, } from './session-replay-browser';
+export { BrowserSource, ChangeType as BrowserChangeType, NodeType, IncrementalSource as BrowserIncrementalSource, MouseInteractionType, MediaInteractionType, PlaybackState, SnapshotFormat, } from './session-replay-browser';
 export { IncrementalSource as MobileIncrementalSource, MobileSource, WireframeType } from './session-replay-mobile';
 export declare const RecordType: {
     BrowserFullSnapshot: typeof BrowserRecordType.FullSnapshot;
@@ -13,18 +13,28 @@ export declare const RecordType: {
     FrustrationRecord: typeof BrowserRecordType.FrustrationRecord;
     MobileFullSnapshot: typeof MobileRecordType.FullSnapshot;
     MobileIncrementalSnapshot: typeof MobileRecordType.IncrementalSnapshot;
+    BrowserChange: typeof BrowserRecordType.Change;
 };
-export declare type RecordType = typeof RecordType[keyof typeof RecordType];
-export declare type IncrementalSource = BrowserIncrementalSource | MobileIncrementalSource;
+export type RecordType = (typeof RecordType)[keyof typeof RecordType];
+export type IncrementalSource = BrowserIncrementalSource | MobileIncrementalSource;
 export declare const PointerEventType: {
     readonly PointerDown: "down";
     readonly PointerUp: "up";
     readonly PointerMove: "move";
 };
-export declare type PointerEventType = typeof PointerEventType[keyof typeof PointerEventType];
+export type PointerEventType = (typeof PointerEventType)[keyof typeof PointerEventType];
 export declare const PointerType: {
     readonly Mouse: "mouse";
     readonly Touch: "touch";
     readonly Pen: "pen";
 };
-export declare type PointerType = typeof PointerType[keyof typeof PointerType];
+export type PointerType = (typeof PointerType)[keyof typeof PointerType];
+export type NodeId = number & {
+    __brand: 'NodeId';
+};
+export type StringId = number & {
+    __brand: 'StringId';
+};
+export type StyleSheetId = number & {
+    __brand: 'StyleSheetId';
+};

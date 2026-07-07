@@ -1,0 +1,25 @@
+# Paths always taken from the `openobserve` branch during an upstream sync,
+# restored with `git checkout openobserve -- <path>` after the tree has been
+# replaced with the upstream commit. One path per line; directories apply
+# recursively. Lines starting with '#' are comments.
+#
+# Rule of thumb: OpenObserve-authored files and fork-identity files live here.
+# Everything else comes from upstream (rebranded by rebrand.mjs, then the
+# generated types are rebuilt from the rebranded schemas by `yarn generate`).
+
+# Fork identity / legal
+LICENSE
+NOTICE
+README.md
+
+# CI is fork-owned (CODEOWNERS, the browser-sdk consumer workflow, and this
+# sync workflow all point at OpenObserve repos).
+.github
+
+# Sync tooling itself
+SYNC.md
+scripts/openobserve
+
+# Note: scripts/generate.mjs, scripts/validate.mjs and scripts/utils.mjs are the
+# UPSTREAM generator tooling and intentionally come from upstream (rebranded), so
+# they track upstream generator changes. Only scripts/openobserve is ours.

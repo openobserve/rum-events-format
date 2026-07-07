@@ -11,10 +11,13 @@ export * from '../generated/sessionReplay'
 
 export {
   BrowserSource,
+  ChangeType as BrowserChangeType,
   NodeType,
   IncrementalSource as BrowserIncrementalSource,
   MouseInteractionType,
   MediaInteractionType,
+  PlaybackState,
+  SnapshotFormat,
 } from './session-replay-browser'
 export { IncrementalSource as MobileIncrementalSource, MobileSource, WireframeType } from './session-replay-mobile'
 
@@ -28,6 +31,7 @@ export const RecordType: {
   FrustrationRecord: typeof BrowserRecordType.FrustrationRecord
   MobileFullSnapshot: typeof MobileRecordType.FullSnapshot
   MobileIncrementalSnapshot: typeof MobileRecordType.IncrementalSnapshot
+  BrowserChange: typeof BrowserRecordType.Change
 } = {
   BrowserFullSnapshot: 2,
   BrowserIncrementalSnapshot: 3,
@@ -38,9 +42,10 @@ export const RecordType: {
   FrustrationRecord: 9,
   MobileFullSnapshot: 10,
   MobileIncrementalSnapshot: 11,
+  BrowserChange: 12,
 } as const
 
-export type RecordType = typeof RecordType[keyof typeof RecordType]
+export type RecordType = (typeof RecordType)[keyof typeof RecordType]
 
 export type IncrementalSource = BrowserIncrementalSource | MobileIncrementalSource
 
@@ -50,7 +55,7 @@ export const PointerEventType = {
   PointerMove: 'move',
 } as const
 
-export type PointerEventType = typeof PointerEventType[keyof typeof PointerEventType]
+export type PointerEventType = (typeof PointerEventType)[keyof typeof PointerEventType]
 
 export const PointerType = {
   Mouse: 'mouse',
@@ -58,4 +63,8 @@ export const PointerType = {
   Pen: 'pen',
 } as const
 
-export type PointerType = typeof PointerType[keyof typeof PointerType]
+export type PointerType = (typeof PointerType)[keyof typeof PointerType]
+
+export type NodeId = number & { __brand: 'NodeId' }
+export type StringId = number & { __brand: 'StringId' }
+export type StyleSheetId = number & { __brand: 'StyleSheetId' }

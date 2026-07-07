@@ -4,11 +4,11 @@
 /**
  * Schema of all properties of a RUM event
  */
-export declare type RumEvent = RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent | RumViewEvent;
+export type RumEvent = RumActionEvent | RumTransitionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent | RumViewEvent | RumViewUpdateEvent | RumVitalEvent;
 /**
  * Schema of all properties of an Action event
  */
-export declare type RumActionEvent = CommonProperties & {
+export type RumActionEvent = CommonProperties & ViewContainerSchema & {
     /**
      * RUM event type
      */
@@ -132,6 +132,10 @@ export declare type RumActionEvent = CommonProperties & {
                  */
                 readonly selector?: string;
                 /**
+                 * Selector data based on the click event composed path
+                 */
+                readonly composed_path_selector?: string;
+                /**
                  * Width of the target element (in pixels)
                  */
                 readonly width?: number;
@@ -139,8 +143,16 @@ export declare type RumActionEvent = CommonProperties & {
                  * Height of the target element (in pixels)
                  */
                 readonly height?: number;
+                /**
+                 * Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path. Used to correlate actions with mobile session replay wireframes.
+                 */
+                readonly permanent_id?: string;
                 [k: string]: unknown;
             };
+            /**
+             * The strategy of how the auto click action name is computed
+             */
+            name_source?: 'custom_attribute' | 'mask_placeholder' | 'standard_attribute' | 'text_content' | 'mask_disallowed' | 'blank';
             [k: string]: unknown;
         };
         [k: string]: unknown;
@@ -148,9 +160,63 @@ export declare type RumActionEvent = CommonProperties & {
     [k: string]: unknown;
 };
 /**
+ * Schema of all properties of an Transition event
+ */
+export type RumTransitionEvent = CommonProperties & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'transition';
+    /**
+     * Stream properties
+     */
+    readonly stream: {
+        /**
+         * UUID of the stream
+         */
+        readonly id: string;
+        [k: string]: unknown;
+    };
+    /**
+     * Transition properties
+     */
+    readonly transition: {
+        /**
+         * Type of the transition
+         */
+        readonly type: string;
+        /**
+         * UUID of the transition
+         */
+        readonly id?: string;
+        /**
+         * The player's current timestamp in milliseconds
+         */
+        readonly timestamp?: number;
+        /**
+         * Buffer starvation duration, the amount of time spent rebuffering in milliseconds
+         */
+        readonly buffer_starvation_duration?: number;
+        /**
+         * Media start delay, the amount of time spent loading before playing in milliseconds
+         */
+        readonly media_start_delay?: number;
+        /**
+         * Error code, as reported by the player
+         */
+        readonly error_code?: number;
+        /**
+         * Duration of the event in milliseconds
+         */
+        readonly duration?: number;
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+};
+/**
  * Schema of all properties of an Error event
  */
-export declare type RumErrorEvent = CommonProperties & ActionChildProperties & {
+export type RumErrorEvent = CommonProperties & ActionChildProperties & ViewContainerSchema & {
     /**
      * RUM event type
      */
@@ -210,17 +276,21 @@ export declare type RumErrorEvent = CommonProperties & ActionChildProperties & {
          */
         readonly type?: string;
         /**
+         * The specific category of the error. It provides a high-level grouping for different types of errors.
+         */
+        readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning' | 'Network';
+        /**
          * Whether the error has been handled manually in the source code or not
          */
         readonly handling?: 'handled' | 'unhandled';
         /**
          * Handling call stack
          */
-        readonly handling_stack?: string;
+        handling_stack?: string;
         /**
          * Source type of the error (the language or platform impacting the error stacktrace format)
          */
-        readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter' | 'roku';
+        readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter' | 'roku' | 'ndk' | 'ios+il2cpp' | 'ndk+il2cpp' | 'windows' | 'macos' | 'linux' | 'maui';
         /**
          * Resource properties of the error
          */
@@ -228,7 +298,7 @@ export declare type RumErrorEvent = CommonProperties & ActionChildProperties & {
             /**
              * HTTP method of the resource
              */
-            readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH';
+            readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT';
             /**
              * HTTP Status code of the resource
              */
@@ -255,8 +325,123 @@ export declare type RumErrorEvent = CommonProperties & ActionChildProperties & {
                 readonly type?: 'ad' | 'advertising' | 'analytics' | 'cdn' | 'content' | 'customer-success' | 'first party' | 'hosting' | 'marketing' | 'other' | 'social' | 'tag-manager' | 'utility' | 'video';
                 [k: string]: unknown;
             };
+            readonly graphql?: RumGraphql;
             [k: string]: unknown;
         };
+        /**
+         * Description of each thread in the process when error happened.
+         */
+        threads?: {
+            /**
+             * Name of the thread (e.g. 'Thread 0').
+             */
+            readonly name: string;
+            /**
+             * Tells if the thread crashed.
+             */
+            readonly crashed: boolean;
+            /**
+             * Unsymbolicated stack trace of the given thread.
+             */
+            readonly stack: string;
+            /**
+             * Platform-specific state of the thread when its state was captured (CPU registers dump for iOS, thread state enum for Android, etc.).
+             */
+            readonly state?: string;
+            [k: string]: unknown;
+        }[];
+        /**
+         * Description of each binary image (native libraries; for Android: .so files) loaded or referenced by the process/application.
+         */
+        readonly binary_images?: {
+            /**
+             * Build UUID that uniquely identifies the binary image.
+             */
+            readonly uuid: string;
+            /**
+             * Name of the library.
+             */
+            readonly name: string;
+            /**
+             * Determines if it's a system or user library.
+             */
+            readonly is_system: boolean;
+            /**
+             * Library's load address (hexadecimal).
+             */
+            readonly load_address?: string;
+            /**
+             * Max value from the library address range (hexadecimal).
+             */
+            readonly max_address?: string;
+            /**
+             * CPU architecture from the library.
+             */
+            readonly arch?: string;
+            [k: string]: unknown;
+        }[];
+        /**
+         * A boolean value saying if any of the stack traces was truncated due to minification.
+         */
+        readonly was_truncated?: boolean;
+        /**
+         * Platform-specific metadata of the error event.
+         */
+        readonly meta?: {
+            /**
+             * The CPU architecture of the process that crashed.
+             */
+            readonly code_type?: string;
+            /**
+             * Parent process information.
+             */
+            readonly parent_process?: string;
+            /**
+             * A client-generated 16-byte UUID of the incident.
+             */
+            readonly incident_identifier?: string;
+            /**
+             * The name of the crashed process.
+             */
+            readonly process?: string;
+            /**
+             * The name of the corresponding BSD termination signal. (in case of iOS crash)
+             */
+            readonly exception_type?: string;
+            /**
+             * CPU specific information about the exception encoded into 64-bit hexadecimal number preceded by the signal code.
+             */
+            readonly exception_codes?: string;
+            /**
+             * The location of the executable.
+             */
+            readonly path?: string;
+            [k: string]: unknown;
+        };
+        /**
+         * Content Security Violation properties
+         */
+        readonly csp?: {
+            /**
+             * In the context of CSP errors, indicates how the violated policy is configured to be treated by the user agent.
+             */
+            readonly disposition?: 'enforce' | 'report';
+            [k: string]: unknown;
+        };
+        /**
+         * Time since application start when error happened (in milliseconds)
+         */
+        readonly time_since_app_start?: number;
+        [k: string]: unknown;
+    };
+    /**
+     * Properties of App Hang and ANR errors
+     */
+    readonly freeze?: {
+        /**
+         * Duration of the main thread freeze (in ns)
+         */
+        readonly duration: number;
         [k: string]: unknown;
     };
     /**
@@ -275,12 +460,22 @@ export declare type RumErrorEvent = CommonProperties & ActionChildProperties & {
     readonly feature_flags?: {
         [k: string]: unknown;
     };
+    /**
+     * Internal properties
+     */
+    readonly _oo?: RumTrace & {
+        /**
+         * Profiling context
+         */
+        profiling?: ProfilingInternalContextSchema;
+        [k: string]: unknown;
+    };
     [k: string]: unknown;
 };
 /**
  * Schema of all properties of a Long Task event
  */
-export declare type RumLongTaskEvent = CommonProperties & ActionChildProperties & {
+export type RumLongTaskEvent = CommonProperties & ActionChildProperties & ViewContainerSchema & {
     /**
      * RUM event type
      */
@@ -290,17 +485,91 @@ export declare type RumLongTaskEvent = CommonProperties & ActionChildProperties 
      */
     readonly long_task: {
         /**
-         * UUID of the long task
+         * UUID of the long task or long animation frame
          */
         readonly id?: string;
         /**
-         * Duration in ns of the long task
+         * Start time of the long animation frame
+         */
+        readonly start_time?: number;
+        /**
+         * Type of the event: long task or long animation frame
+         */
+        readonly entry_type?: 'long-task' | 'long-animation-frame';
+        /**
+         * Duration in ns of the long task or long animation frame
          */
         readonly duration: number;
+        /**
+         * Duration in ns for which the animation frame was being blocked
+         */
+        readonly blocking_duration?: number;
+        /**
+         * Time difference (in ns) between the timeOrigin and the start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
+         */
+        readonly render_start?: number;
+        /**
+         * Time difference (in ns) between the timeOrigin and the start time of the time period spent in style and layout calculations
+         */
+        readonly style_and_layout_start?: number;
+        /**
+         * Time difference (in ns) between the timeOrigin and the start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
+         */
+        readonly first_ui_event_timestamp?: number;
         /**
          * Whether this long task is considered a frozen frame
          */
         readonly is_frozen_frame?: boolean;
+        /**
+         * A list of long scripts that were executed over the course of the long frame
+         */
+        readonly scripts?: {
+            /**
+             * Duration in ns between startTime and when the subsequent microtask queue has finished processing
+             */
+            readonly duration?: number;
+            /**
+             * Duration in ns of the total time spent in 'pausing' synchronous operations (alert, synchronous XHR)
+             */
+            readonly pause_duration?: number;
+            /**
+             * Duration in ns of the the total time spent processing forced layout and style inside this function
+             */
+            readonly forced_style_and_layout_duration?: number;
+            /**
+             * Time the entry function was invoked
+             */
+            readonly start_time?: number;
+            /**
+             * Time after compilation
+             */
+            readonly execution_start?: number;
+            /**
+             * The script resource name where available (or empty if not found)
+             */
+            source_url?: string;
+            /**
+             * The script function name where available (or empty if not found)
+             */
+            readonly source_function_name?: string;
+            /**
+             * The script character position where available (or -1 if not found)
+             */
+            readonly source_char_position?: number;
+            /**
+             * Information about the invoker of the script
+             */
+            invoker?: string;
+            /**
+             * Type of the invoker of the script
+             */
+            readonly invoker_type?: 'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script';
+            /**
+             * The container (the top-level document, or an <iframe>) the long animation frame occurred in
+             */
+            readonly window_attribution?: string;
+            [k: string]: unknown;
+        }[];
         [k: string]: unknown;
     };
     /**
@@ -311,6 +580,10 @@ export declare type RumLongTaskEvent = CommonProperties & ActionChildProperties 
          * Whether the long task should be discarded or indexed
          */
         readonly discarded?: boolean;
+        /**
+         * Profiling context
+         */
+        profiling?: ProfilingInternalContextSchema;
         [k: string]: unknown;
     };
     [k: string]: unknown;
@@ -318,7 +591,7 @@ export declare type RumLongTaskEvent = CommonProperties & ActionChildProperties 
 /**
  * Schema of all properties of a Resource event
  */
-export declare type RumResourceEvent = CommonProperties & ActionChildProperties & {
+export type RumResourceEvent = CommonProperties & ActionChildProperties & ViewContainerSchema & {
     /**
      * RUM event type
      */
@@ -338,7 +611,7 @@ export declare type RumResourceEvent = CommonProperties & ActionChildProperties 
         /**
          * HTTP method of the resource
          */
-        readonly method?: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH';
+        readonly method?: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT';
         /**
          * URL of the resource
          */
@@ -355,6 +628,36 @@ export declare type RumResourceEvent = CommonProperties & ActionChildProperties 
          * Size in octet of the resource response body
          */
         readonly size?: number;
+        /**
+         * Size in octet of the response body before removing any applied content encodings
+         */
+        readonly encoded_body_size?: number;
+        /**
+         * Size in octet of the response body after removing any applied encoding
+         */
+        readonly decoded_body_size?: number;
+        /**
+         * Size in octet of the fetched response resource
+         */
+        readonly transfer_size?: number;
+        /**
+         * Render blocking status of the resource
+         */
+        readonly render_blocking_status?: 'blocking' | 'non-blocking';
+        /**
+         * Worker phase properties
+         */
+        readonly worker?: {
+            /**
+             * Duration in nanoseconds of the resource worker phase
+             */
+            readonly duration: number;
+            /**
+             * Duration in nanoseconds between start of the request and start of the worker phase
+             */
+            readonly start: number;
+            [k: string]: unknown;
+        };
         /**
          * Redirect phase properties
          */
@@ -440,6 +743,14 @@ export declare type RumResourceEvent = CommonProperties & ActionChildProperties 
             [k: string]: unknown;
         };
         /**
+         * Network protocol used to fetch the resource (e.g., 'http/1.1', 'h2')
+         */
+        readonly protocol?: string;
+        /**
+         * Delivery type of the resource
+         */
+        readonly delivery_type?: 'cache' | 'navigational-prefetch' | 'other';
+        /**
          * The provider for this resource
          */
         readonly provider?: {
@@ -457,24 +768,45 @@ export declare type RumResourceEvent = CommonProperties & ActionChildProperties 
             readonly type?: 'ad' | 'advertising' | 'analytics' | 'cdn' | 'content' | 'customer-success' | 'first party' | 'hosting' | 'marketing' | 'other' | 'social' | 'tag-manager' | 'utility' | 'video';
             [k: string]: unknown;
         };
+        /**
+         * Request properties
+         */
+        readonly request?: {
+            /**
+             * Size in octet of the request body sent over the network (after encoding)
+             */
+            readonly encoded_body_size?: number;
+            /**
+             * Size in octet of the request body before any encoding
+             */
+            readonly decoded_body_size?: number;
+            /**
+             * HTTP headers of the resource request
+             */
+            headers?: {
+                [k: string]: string;
+            };
+            [k: string]: unknown;
+        };
+        /**
+         * Response properties
+         */
+        readonly response?: {
+            /**
+             * HTTP headers of the resource response
+             */
+            headers?: {
+                [k: string]: string;
+            };
+            [k: string]: unknown;
+        };
+        readonly graphql?: RumGraphql;
         [k: string]: unknown;
     };
     /**
      * Internal properties
      */
-    readonly _oo?: {
-        /**
-         * span identifier in decimal format
-         */
-        readonly span_id?: string;
-        /**
-         * trace identifier in decimal format
-         */
-        readonly trace_id?: string;
-        /**
-         * trace sample rate in decimal format
-         */
-        readonly rule_psr?: number;
+    readonly _oo?: RumTrace & {
         /**
          * Whether the resource should be discarded or indexed
          */
@@ -486,239 +818,22 @@ export declare type RumResourceEvent = CommonProperties & ActionChildProperties 
 /**
  * Schema of all properties of a View event
  */
-export declare type RumViewEvent = CommonProperties & {
+export type RumViewEvent = CommonProperties & ViewContainerSchema & StreamSchema & ViewProperties & {
     /**
      * RUM event type
      */
     readonly type: 'view';
-    /**
-     * View properties
-     */
-    readonly view: {
-        /**
-         * Duration in ns to the view is considered loaded
-         */
-        readonly loading_time?: number;
-        /**
-         * Type of the loading of the view
-         */
-        readonly loading_type?: 'initial_load' | 'route_change' | 'activity_display' | 'activity_redisplay' | 'fragment_display' | 'fragment_redisplay' | 'view_controller_display' | 'view_controller_redisplay';
-        /**
-         * Time spent on the view in ns
-         */
-        readonly time_spent: number;
-        /**
-         * Duration in ns to the first rendering
-         */
-        readonly first_contentful_paint?: number;
-        /**
-         * Duration in ns to the largest contentful paint
-         */
-        readonly largest_contentful_paint?: number;
-        /**
-         * Duration in ns of the first input event delay
-         */
-        readonly first_input_delay?: number;
-        /**
-         * Duration in ns to the first input
-         */
-        readonly first_input_time?: number;
-        /**
-         * Longest duration in ns between an interaction and the next paint
-         */
-        readonly interaction_to_next_paint?: number;
-        /**
-         * Total layout shift score that occurred on the view
-         */
-        readonly cumulative_layout_shift?: number;
-        /**
-         * Duration in ns to the complete parsing and loading of the document and its sub resources
-         */
-        readonly dom_complete?: number;
-        /**
-         * Duration in ns to the complete parsing and loading of the document without its sub resources
-         */
-        readonly dom_content_loaded?: number;
-        /**
-         * Duration in ns to the end of the parsing of the document
-         */
-        readonly dom_interactive?: number;
-        /**
-         * Duration in ns to the end of the load event handler execution
-         */
-        readonly load_event?: number;
-        /**
-         * Duration in ns to the response start of the document request
-         */
-        readonly first_byte?: number;
-        /**
-         * User custom timings of the view. As timing name is used as facet path, it must contain only letters, digits, or the characters - _ . @ $
-         */
-        readonly custom_timings?: {
-            [k: string]: number;
-        };
-        /**
-         * Whether the View corresponding to this event is considered active
-         */
-        readonly is_active?: boolean;
-        /**
-         * Whether the View had a low average refresh rate
-         */
-        readonly is_slow_rendered?: boolean;
-        /**
-         * Properties of the actions of the view
-         */
-        readonly action: {
-            /**
-             * Number of actions that occurred on the view
-             */
-            readonly count: number;
+    view: {
+        time_spent: number;
+        action: {
             [k: string]: unknown;
         };
-        /**
-         * Properties of the errors of the view
-         */
-        readonly error: {
-            /**
-             * Number of errors that occurred on the view
-             */
-            readonly count: number;
+        error: {
             [k: string]: unknown;
         };
-        /**
-         * Properties of the crashes of the view
-         */
-        readonly crash?: {
-            /**
-             * Number of crashes that occurred on the view
-             */
-            readonly count: number;
+        resource: {
             [k: string]: unknown;
         };
-        /**
-         * Properties of the long tasks of the view
-         */
-        readonly long_task?: {
-            /**
-             * Number of long tasks that occurred on the view
-             */
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        /**
-         * Properties of the frozen frames of the view
-         */
-        readonly frozen_frame?: {
-            /**
-             * Number of frozen frames that occurred on the view
-             */
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        /**
-         * Properties of the resources of the view
-         */
-        readonly resource: {
-            /**
-             * Number of resources that occurred on the view
-             */
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        /**
-         * Properties of the frustrations of the view
-         */
-        readonly frustration?: {
-            /**
-             * Number of frustrations that occurred on the view
-             */
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        /**
-         * List of the periods of time the user had the view in foreground (focused in the browser)
-         */
-        readonly in_foreground_periods?: {
-            /**
-             * Duration in ns between start of the view and start of foreground period
-             */
-            readonly start: number;
-            /**
-             * Duration in ns of the view foreground period
-             */
-            readonly duration: number;
-            [k: string]: unknown;
-        }[];
-        /**
-         * Average memory used during the view lifetime (in bytes)
-         */
-        readonly memory_average?: number;
-        /**
-         * Peak memory used during the view lifetime (in bytes)
-         */
-        readonly memory_max?: number;
-        /**
-         * Total number of cpu ticks during the view’s lifetime
-         */
-        readonly cpu_ticks_count?: number;
-        /**
-         * Average number of cpu ticks per second during the view’s lifetime
-         */
-        readonly cpu_ticks_per_second?: number;
-        /**
-         * Average refresh rate during the view’s lifetime (in frames per second)
-         */
-        readonly refresh_rate_average?: number;
-        /**
-         * Minimum refresh rate during the view’s lifetime (in frames per second)
-         */
-        readonly refresh_rate_min?: number;
-        /**
-         * Time taken for Flutter 'build' methods.
-         */
-        flutter_build_time?: RumPerfMetric;
-        /**
-         * Time taken for Flutter to rasterize the view.
-         */
-        flutter_raster_time?: RumPerfMetric;
-        /**
-         * The JavaScript refresh rate for React Native
-         */
-        js_refresh_rate?: RumPerfMetric;
-        [k: string]: unknown;
-    };
-    /**
-     * Session properties
-     */
-    readonly session?: {
-        /**
-         * The precondition that led to the creation of the session
-         */
-        readonly start_precondition?: 'app_launch' | 'inactivity_timeout' | 'max_duration' | 'explicit_stop' | 'background_event';
-        /**
-         * Whether this session is currently active. Set to false to manually stop a session
-         */
-        readonly is_active?: boolean;
-        /**
-         * Whether this session has been sampled for replay
-         */
-        readonly sampled_for_replay?: boolean;
-        [k: string]: unknown;
-    };
-    /**
-     * Feature flags properties
-     */
-    readonly feature_flags?: {
-        [k: string]: unknown;
-    };
-    /**
-     * Privacy properties
-     */
-    readonly privacy?: {
-        /**
-         * The replay privacy level
-         */
-        readonly replay_level: 'allow' | 'mask' | 'mask-user-input';
         [k: string]: unknown;
     };
     /**
@@ -761,34 +876,173 @@ export declare type RumViewEvent = CommonProperties & {
             segments_total_raw_size?: number;
             [k: string]: unknown;
         };
+        /**
+         * Additional information of the reported Cumulative Layout Shift
+         */
+        readonly cls?: {
+            /**
+             * Pixel ratio of the device where the layout shift was reported
+             */
+            readonly device_pixel_ratio?: number;
+            [k: string]: unknown;
+        };
+        /**
+         * Subset of the SDK configuration options in use during its execution
+         */
+        readonly configuration?: {
+            /**
+             * Whether session replay recording configured to start manually
+             */
+            readonly start_session_replay_recording_manually?: boolean;
+            [k: string]: unknown;
+        };
+        /**
+         * Profiling context
+         */
+        profiling?: ProfilingInternalContextSchema;
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+};
+/**
+ * Schema of all properties of a View Update event
+ */
+export type RumViewUpdateEvent = ViewContainerSchema & StreamSchema & ViewProperties & CommonProperties & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'view_update';
+    /**
+     * Internal properties
+     */
+    readonly _oo?: {
+        /**
+         * Version of the update of the view event
+         */
+        readonly document_version: number;
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+};
+export type RumVitalEvent = RumVitalDurationEvent | RumVitalOperationStepEvent | RumVitalAppLaunchEvent;
+/**
+ * Schema for a duration vital event.
+ */
+export type RumVitalDurationEvent = RumVitalEventCommonProperties & {
+    /**
+     * Vital properties
+     */
+    readonly vital?: {
+        /**
+         * Type of the vital.
+         */
+        readonly type: 'duration';
+        /**
+         * Duration of the vital in nanoseconds.
+         */
+        readonly duration: number;
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+};
+/**
+ * Schema of common properties for a Vital event
+ */
+export type RumVitalEventCommonProperties = CommonProperties & ViewContainerSchema & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'vital';
+    /**
+     * Vital properties
+     */
+    readonly vital: {
+        /**
+         * UUID of the vital
+         */
+        readonly id: string;
+        /**
+         * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
+         */
+        readonly name?: string;
+        /**
+         * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
+         */
+        readonly description?: string;
         [k: string]: unknown;
     };
     /**
-     * Display properties
+     * Internal properties
      */
-    readonly display?: {
+    readonly _oo?: {
         /**
-         * Scroll properties
+         * Profiling context
          */
-        readonly scroll?: {
-            /**
-             * Distance between the top and the lowest point reached on this view (in pixels)
-             */
-            readonly max_depth: number;
-            /**
-             * Page scroll height (total height) when the maximum scroll depth was reached for this view (in pixels)
-             */
-            readonly max_depth_scroll_height: number;
-            /**
-             * Page scroll top (scrolled distance) when the maximum scroll depth was reached for this view (in pixels)
-             */
-            readonly max_depth_scroll_top: number;
-            /**
-             * Duration between the view start and the scroll event that reached the maximum scroll depth for this view (in nanoseconds)
-             */
-            readonly max_depth_time: number;
-            [k: string]: unknown;
-        };
+        profiling?: ProfilingInternalContextSchema;
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+};
+/**
+ * Schema for a vital operation step event.
+ */
+export type RumVitalOperationStepEvent = RumVitalEventCommonProperties & {
+    /**
+     * Vital properties
+     */
+    readonly vital?: {
+        /**
+         * Type of the vital.
+         */
+        readonly type: 'operation_step';
+        /**
+         * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
+         */
+        readonly operation_key?: string;
+        /**
+         * Type of the step that triggered the vital, if applicable
+         */
+        readonly step_type: 'start' | 'update' | 'retry' | 'end';
+        /**
+         * Reason for the failure of the step, if applicable
+         */
+        readonly failure_reason?: 'error' | 'abandoned' | 'other';
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+};
+/**
+ * Schema for app launch metrics.
+ */
+export type RumVitalAppLaunchEvent = RumVitalEventCommonProperties & {
+    /**
+     * Vital properties
+     */
+    readonly vital?: {
+        /**
+         * Type of the vital.
+         */
+        readonly type: 'app_launch';
+        /**
+         * The metric of the app launch.
+         */
+        readonly app_launch_metric: 'ttid' | 'ttfd';
+        /**
+         * Duration of the vital in nanoseconds.
+         */
+        readonly duration: number;
+        /**
+         * The type of the app launch.
+         */
+        readonly startup_type?: 'cold_start' | 'warm_start';
+        /**
+         * Whether the app launch was prewarmed.
+         */
+        readonly is_prewarmed?: boolean;
+        /**
+         * If the app launch had a saved instance state bundle.
+         */
+        readonly has_saved_instance_state_bundle?: boolean;
         [k: string]: unknown;
     };
     [k: string]: unknown;
@@ -809,16 +1063,32 @@ export interface CommonProperties {
          * UUID of the application
          */
         readonly id: string;
+        /**
+         * The user's current locale as a language tag (language + region), computed from their preferences and the app's supported languages, e.g. 'es-FR'.
+         */
+        readonly current_locale?: string;
         [k: string]: unknown;
     };
     /**
      * The service name for this application
      */
-    readonly service?: string;
+    service?: string;
     /**
      * The version for this application
      */
-    readonly version?: string;
+    version?: string;
+    /**
+     * The build version for this application
+     */
+    readonly build_version?: string;
+    /**
+     * Generated unique ID of the application build. Unlike version or build_version this field is not meant to be coming from the user, but rather generated by the tooling for each build.
+     */
+    readonly build_id?: string;
+    /**
+     * Tags of the event in key:value format, separated by commas (e.g. 'env:prod,version:1.2.3')
+     */
+    readonly ddtags?: string;
     /**
      * Session properties
      */
@@ -840,7 +1110,7 @@ export interface CommonProperties {
     /**
      * The source of this event
      */
-    readonly source?: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'roku';
+    readonly source?: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'roku' | 'unity' | 'kotlin-multiplatform' | 'electron' | 'rum-cpp' | 'maui';
     /**
      * View properties
      */
@@ -879,6 +1149,34 @@ export interface CommonProperties {
          * Email of the user
          */
         readonly email?: string;
+        /**
+         * Identifier of the user across sessions
+         */
+        readonly anonymous_id?: string;
+        [k: string]: unknown;
+    };
+    /**
+     * Account properties
+     */
+    readonly account?: {
+        /**
+         * Identifier of the account
+         */
+        readonly id: string;
+        /**
+         * Name of the account
+         */
+        readonly name?: string;
+        [k: string]: unknown;
+    };
+    /**
+     * Tab properties
+     */
+    readonly tab?: {
+        /**
+         * UUID of the browser tab
+         */
+        readonly id: string;
         [k: string]: unknown;
     };
     /**
@@ -892,7 +1190,11 @@ export interface CommonProperties {
         /**
          * The list of available network interfaces
          */
-        readonly interfaces: ('bluetooth' | 'cellular' | 'ethernet' | 'wifi' | 'wimax' | 'mixed' | 'other' | 'unknown' | 'none')[];
+        readonly interfaces?: ('bluetooth' | 'cellular' | 'ethernet' | 'wifi' | 'wimax' | 'mixed' | 'other' | 'unknown' | 'none')[];
+        /**
+         * Cellular connection type reflecting the measured network performance
+         */
+        readonly effective_type?: 'slow-2g' | '2g' | '3g' | '4g';
         /**
          * Cellular connectivity properties
          */
@@ -986,7 +1288,7 @@ export interface CommonProperties {
         /**
          * Device type info
          */
-        readonly type: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other';
+        readonly type?: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other';
         /**
          * Device marketing name, e.g. Xiaomi Redmi Note 8 Pro, Pixel 5, etc.
          */
@@ -1003,6 +1305,42 @@ export interface CommonProperties {
          * The CPU architecture of the device that is reporting the error
          */
         readonly architecture?: string;
+        /**
+         * The user’s locale as a language tag combining language and region, e.g. 'en-US'.
+         */
+        readonly locale?: string;
+        /**
+         * Ordered list of the user’s preferred system languages as IETF language tags.
+         */
+        readonly locales?: string[];
+        /**
+         * The device’s current time zone identifier, e.g. 'Europe/Berlin'.
+         */
+        readonly time_zone?: string;
+        /**
+         * Current battery level of the device (0.0 to 1.0).
+         */
+        readonly battery_level?: number;
+        /**
+         * Whether the device is in power saving mode.
+         */
+        readonly power_saving_mode?: boolean;
+        /**
+         * Current screen brightness level (0.0 to 1.0).
+         */
+        readonly brightness_level?: number;
+        /**
+         * Number of logical CPU cores available for scheduling on the device at runtime, as reported by the operating system.
+         */
+        readonly logical_cpu_count?: number;
+        /**
+         * Total RAM in megabytes
+         */
+        readonly total_ram?: number;
+        /**
+         * Whether the device is considered a low RAM device (Android)
+         */
+        readonly is_low_ram?: boolean;
         [k: string]: unknown;
     };
     /**
@@ -1021,6 +1359,10 @@ export interface CommonProperties {
              * Session plan: 1 is the plan without replay, 2 is the plan with replay (deprecated)
              */
             plan?: 1 | 2;
+            /**
+             * The precondition that led to the creation of the session
+             */
+            readonly session_precondition?: 'user_app_launch' | 'inactivity_timeout' | 'max_duration' | 'background_launch' | 'prewarm' | 'from_non_interactive_session' | 'explicit_stop';
             [k: string]: unknown;
         };
         /**
@@ -1035,18 +1377,66 @@ export interface CommonProperties {
              * The percentage of sessions with RUM & Session Replay pricing tracked
              */
             readonly session_replay_sample_rate?: number;
+            /**
+             * The percentage of sessions profiled
+             */
+            readonly profiling_sample_rate?: number;
+            /**
+             * The percentage of sessions with traced resources
+             */
+            readonly trace_sample_rate?: number;
             [k: string]: unknown;
         };
         /**
          * Browser SDK version
          */
         readonly browser_sdk_version?: string;
+        /**
+         * SDK name (e.g. 'logs', 'rum', 'rum-slim', etc.)
+         */
+        readonly sdk_name?: string;
         [k: string]: unknown;
     };
     /**
      * User provided context
      */
     context?: {
+        [k: string]: unknown;
+    };
+    /**
+     * Stream properties
+     */
+    stream?: {
+        /**
+         * UUID of the stream
+         */
+        readonly id: string;
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+}
+/**
+ * View Container schema for views that are nested (webviews in mobile)
+ */
+export interface ViewContainerSchema {
+    /**
+     * View Container properties (view wrapping the current view)
+     */
+    readonly container?: {
+        /**
+         * Attributes of the view's container
+         */
+        readonly view: {
+            /**
+             * ID of the parent view
+             */
+            readonly id: string;
+            [k: string]: unknown;
+        };
+        /**
+         * Source of the parent view
+         */
+        readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'roku' | 'unity' | 'kotlin-multiplatform' | 'electron' | 'rum-cpp' | 'maui';
         [k: string]: unknown;
     };
     [k: string]: unknown;
@@ -1063,6 +1453,491 @@ export interface ActionChildProperties {
          * UUID of the action
          */
         readonly id: string | string[];
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+}
+/**
+ * GraphQL request parameters
+ */
+export interface RumGraphql {
+    /**
+     * Type of the GraphQL operation
+     */
+    readonly operationType?: 'query' | 'mutation' | 'subscription';
+    /**
+     * Name of the GraphQL operation
+     */
+    readonly operationName?: string;
+    /**
+     * Content of the GraphQL operation
+     */
+    payload?: string;
+    /**
+     * String representation of the operation variables
+     */
+    variables?: string;
+    /**
+     * Number of GraphQL errors in the response
+     */
+    readonly error_count?: number;
+    /**
+     * Array of GraphQL errors from the response
+     */
+    readonly errors?: {
+        /**
+         * Error message
+         */
+        readonly message: string;
+        /**
+         * Error code (used by some providers)
+         */
+        readonly code?: string;
+        /**
+         * Array of error locations in the GraphQL query
+         */
+        readonly locations?: {
+            /**
+             * Line number where the error occurred
+             */
+            readonly line: number;
+            /**
+             * Column number where the error occurred
+             */
+            readonly column: number;
+            [k: string]: unknown;
+        }[];
+        /**
+         * Path to the field that caused the error
+         */
+        readonly path?: (string | number)[];
+        [k: string]: unknown;
+    }[];
+    [k: string]: unknown;
+}
+/**
+ * Trace context properties
+ */
+export interface RumTrace {
+    /**
+     * span identifier in decimal format
+     */
+    readonly span_id?: string;
+    /**
+     * parent span identifier in decimal format
+     */
+    readonly parent_span_id?: string;
+    /**
+     * trace identifier, either a 64 bit decimal number or a 128 bit hexadecimal number padded with 0s
+     */
+    readonly trace_id?: string;
+    /**
+     * trace sample rate in decimal format
+     */
+    readonly rule_psr?: number;
+    [k: string]: unknown;
+}
+/**
+ * RUM Profiler Internal Context schema
+ */
+export interface ProfilingInternalContextSchema {
+    /**
+     * Used to track the status of the RUM Profiler.
+     *
+     * They are defined in order of when they can happen, from the moment the SDK is initialized to the moment the Profiler is actually running.
+     *
+     * - `starting`: The Profiler is starting (i.e., when the SDK just started). This is the initial status.
+     * - `running`: The Profiler is running.
+     * - `stopped`: The Profiler is stopped.
+     * - `error`: The Profiler encountered an error. See `error_reason` for more details.
+     */
+    readonly status?: 'starting' | 'running' | 'stopped' | 'error';
+    /**
+     * The reason the Profiler encountered an error. This attribute is only present if the status is `error`.
+     *
+     * Possible values:
+     * - `not-supported-by-browser`: The browser does not support the Profiler (i.e., `window.Profiler` is not available).
+     * - `failed-to-lazy-load`: The Profiler script failed to be loaded by the browser (may be a connection issue or the chunk was not found).
+     * - `missing-document-policy-header`: The Profiler failed to start because its missing `Document-Policy: js-profiling` HTTP response header.
+     * - `unexpected-exception`: An exception occurred when starting the Profiler.
+     */
+    readonly error_reason?: 'not-supported-by-browser' | 'failed-to-lazy-load' | 'missing-document-policy-header' | 'unexpected-exception';
+    [k: string]: unknown;
+}
+/**
+ * Stream schema for media streaming properties
+ */
+export interface StreamSchema {
+    /**
+     * Stream properties
+     */
+    readonly stream?: {
+        /**
+         * current bitrate at the time of collection
+         */
+        bitrate?: number;
+        /**
+         * How long is the content (VOD only) (in ms)
+         */
+        readonly duration?: number;
+        /**
+         * Stream format
+         */
+        readonly format?: string;
+        /**
+         * current frames per second at the time of collection
+         */
+        fps?: number;
+        /**
+         * Stream resolution
+         */
+        readonly resolution?: string;
+        /**
+         * current timestamp at the time of collection
+         */
+        timestamp?: number;
+        /**
+         * how much did the media progress since the last context update (in ms)
+         */
+        watch_time?: number;
+        /**
+         * Percentage of amount of time watched relative to its total duration
+         */
+        completion_percent?: number;
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+}
+/**
+ * Shared optional view-specific properties used by both view and view_update events
+ */
+export interface ViewProperties {
+    /**
+     * View properties
+     */
+    readonly view?: {
+        /**
+         * Duration in ns to the view is considered loaded
+         */
+        readonly loading_time?: number;
+        /**
+         * Duration in ns from the moment the view was started until all the initial network requests settled
+         */
+        readonly network_settled_time?: number;
+        /**
+         * Duration in ns to from the last interaction on previous view to the moment the current view was displayed
+         */
+        readonly interaction_to_next_view_time?: number;
+        /**
+         * Type of the loading of the view
+         */
+        readonly loading_type?: 'initial_load' | 'route_change' | 'activity_display' | 'activity_redisplay' | 'fragment_display' | 'fragment_redisplay' | 'view_controller_display' | 'view_controller_redisplay' | 'session_renewal' | 'bf_cache';
+        /**
+         * Time spent on the view in ns
+         */
+        readonly time_spent?: number;
+        /**
+         * @deprecated
+         * Duration in ns to the first rendering (deprecated in favor of `view.performance.fcp.timestamp`)
+         */
+        readonly first_contentful_paint?: number;
+        /**
+         * @deprecated
+         * Duration in ns to the largest contentful paint (deprecated in favor of `view.performance.lcp.timestamp`)
+         */
+        readonly largest_contentful_paint?: number;
+        /**
+         * @deprecated
+         * CSS selector path of the largest contentful paint element (deprecated in favor of `view.performance.lcp.target_selector`)
+         */
+        readonly largest_contentful_paint_target_selector?: string;
+        /**
+         * @deprecated
+         * Duration in ns of the first input event delay (deprecated in favor of `view.performance.fid.duration`)
+         */
+        readonly first_input_delay?: number;
+        /**
+         * @deprecated
+         * Duration in ns to the first input (deprecated in favor of `view.performance.fid.timestamp`)
+         */
+        readonly first_input_time?: number;
+        /**
+         * @deprecated
+         * CSS selector path of the first input target element (deprecated in favor of `view.performance.fid.target_selector`)
+         */
+        readonly first_input_target_selector?: string;
+        /**
+         * @deprecated
+         * Longest duration in ns between an interaction and the next paint (deprecated in favor of `view.performance.inp.duration`)
+         */
+        readonly interaction_to_next_paint?: number;
+        /**
+         * @deprecated
+         * Duration in ns between start of the view and start of the INP (deprecated in favor of `view.performance.inp.timestamp`)
+         */
+        readonly interaction_to_next_paint_time?: number;
+        /**
+         * @deprecated
+         * CSS selector path of the interacted element corresponding to INP (deprecated in favor of `view.performance.inp.target_selector`)
+         */
+        readonly interaction_to_next_paint_target_selector?: string;
+        /**
+         * @deprecated
+         * Total layout shift score that occurred on the view (deprecated in favor of `view.performance.cls.score`)
+         */
+        readonly cumulative_layout_shift?: number;
+        /**
+         * @deprecated
+         * Duration in ns between start of the view and start of the largest layout shift contributing to CLS (deprecated in favor of `view.performance.cls.timestamp`)
+         */
+        readonly cumulative_layout_shift_time?: number;
+        /**
+         * @deprecated
+         * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS (deprecated in favor of `view.performance.cls.target_selector`)
+         */
+        readonly cumulative_layout_shift_target_selector?: string;
+        /**
+         * Duration in ns to the complete parsing and loading of the document and its sub resources
+         */
+        readonly dom_complete?: number;
+        /**
+         * Duration in ns to the complete parsing and loading of the document without its sub resources
+         */
+        readonly dom_content_loaded?: number;
+        /**
+         * Duration in ns to the end of the parsing of the document
+         */
+        readonly dom_interactive?: number;
+        /**
+         * Duration in ns to the end of the load event handler execution
+         */
+        readonly load_event?: number;
+        /**
+         * Duration in ns to the response start of the document request
+         */
+        readonly first_byte?: number;
+        /**
+         * User custom timings of the view. As timing name is used as facet path, it must contain only letters, digits, or the characters - _ . @ $
+         */
+        readonly custom_timings?: {
+            [k: string]: number;
+        };
+        /**
+         * Whether the View corresponding to this event is considered active
+         */
+        readonly is_active?: boolean;
+        /**
+         * Whether the View had a low average refresh rate
+         */
+        readonly is_slow_rendered?: boolean;
+        /**
+         * Properties of the actions of the view
+         */
+        readonly action?: {
+            /**
+             * Number of actions that occurred on the view
+             */
+            readonly count: number;
+            [k: string]: unknown;
+        };
+        /**
+         * Properties of the errors of the view
+         */
+        readonly error?: {
+            /**
+             * Number of errors that occurred on the view
+             */
+            readonly count: number;
+            [k: string]: unknown;
+        };
+        /**
+         * Properties of the crashes of the view
+         */
+        readonly crash?: {
+            /**
+             * Number of crashes that occurred on the view
+             */
+            readonly count: number;
+            [k: string]: unknown;
+        };
+        /**
+         * Properties of the long tasks of the view
+         */
+        readonly long_task?: {
+            /**
+             * Number of long tasks that occurred on the view
+             */
+            readonly count: number;
+            [k: string]: unknown;
+        };
+        /**
+         * Properties of the frozen frames of the view
+         */
+        readonly frozen_frame?: {
+            /**
+             * Number of frozen frames that occurred on the view
+             */
+            readonly count: number;
+            [k: string]: unknown;
+        };
+        /**
+         * List of slow frames during the view's lifetime
+         */
+        readonly slow_frames?: {
+            /**
+             * Duration in ns between start of the view and the start of the slow frame
+             */
+            readonly start: number;
+            /**
+             * Duration in ns of the slow frame
+             */
+            readonly duration: number;
+            [k: string]: unknown;
+        }[];
+        /**
+         * Properties of the resources of the view
+         */
+        readonly resource?: {
+            /**
+             * Number of resources that occurred on the view
+             */
+            readonly count: number;
+            [k: string]: unknown;
+        };
+        /**
+         * Properties of the frustrations of the view
+         */
+        readonly frustration?: {
+            /**
+             * Number of frustrations that occurred on the view
+             */
+            readonly count: number;
+            [k: string]: unknown;
+        };
+        /**
+         * List of the periods of time the user had the view in foreground (focused in the browser)
+         */
+        readonly in_foreground_periods?: {
+            /**
+             * Duration in ns between start of the view and start of foreground period
+             */
+            readonly start: number;
+            /**
+             * Duration in ns of the view foreground period
+             */
+            readonly duration: number;
+            [k: string]: unknown;
+        }[];
+        /**
+         * Average memory used during the view lifetime (in bytes)
+         */
+        readonly memory_average?: number;
+        /**
+         * Peak memory used during the view lifetime (in bytes)
+         */
+        readonly memory_max?: number;
+        /**
+         * Total number of cpu ticks during the view's lifetime
+         */
+        readonly cpu_ticks_count?: number;
+        /**
+         * Average number of cpu ticks per second during the view's lifetime
+         */
+        readonly cpu_ticks_per_second?: number;
+        /**
+         * Average refresh rate during the view's lifetime (in frames per second)
+         */
+        readonly refresh_rate_average?: number;
+        /**
+         * Minimum refresh rate during the view's lifetime (in frames per second)
+         */
+        readonly refresh_rate_min?: number;
+        /**
+         * Rate of slow frames during the view's lifetime (in milliseconds per second)
+         */
+        readonly slow_frames_rate?: number;
+        /**
+         * Rate of freezes during the view's lifetime (in seconds per hour)
+         */
+        readonly freeze_rate?: number;
+        /**
+         * Time taken for Flutter 'build' methods.
+         */
+        flutter_build_time?: RumPerfMetric;
+        /**
+         * Time taken for Flutter to rasterize the view.
+         */
+        flutter_raster_time?: RumPerfMetric;
+        /**
+         * The JavaScript refresh rate for React Native
+         */
+        js_refresh_rate?: RumPerfMetric;
+        /**
+         * Performance data. (Web Vitals, etc.)
+         */
+        performance?: ViewPerformanceData;
+        /**
+         * Accessibility properties of the view
+         */
+        accessibility?: ViewAccessibilityProperties;
+        [k: string]: unknown;
+    };
+    /**
+     * Session properties
+     */
+    readonly session?: {
+        /**
+         * Whether this session is currently active. Set to false to manually stop a session
+         */
+        readonly is_active?: boolean;
+        /**
+         * Whether this session has been sampled for replay
+         */
+        readonly sampled_for_replay?: boolean;
+        [k: string]: unknown;
+    };
+    /**
+     * Feature flags properties
+     */
+    readonly feature_flags?: {
+        [k: string]: unknown;
+    };
+    /**
+     * Privacy properties
+     */
+    readonly privacy?: {
+        /**
+         * The replay privacy level
+         */
+        readonly replay_level: 'allow' | 'mask' | 'mask-user-input';
+        [k: string]: unknown;
+    };
+    /**
+     * Display properties
+     */
+    readonly display?: {
+        /**
+         * Scroll properties
+         */
+        readonly scroll?: {
+            /**
+             * Distance between the top and the lowest point reached on this view (in pixels)
+             */
+            readonly max_depth: number;
+            /**
+             * Page scroll top (scrolled distance) when the maximum scroll depth was reached for this view (in pixels)
+             */
+            readonly max_depth_scroll_top: number;
+            /**
+             * Maximum page scroll height (total height) for this view (in pixels)
+             */
+            readonly max_scroll_height: number;
+            /**
+             * Duration between the view start and the time the max scroll height was reached for this view (in nanoseconds)
+             */
+            readonly max_scroll_height_time: number;
+            [k: string]: unknown;
+        };
         [k: string]: unknown;
     };
     [k: string]: unknown;
@@ -1087,5 +1962,263 @@ export interface RumPerfMetric {
      * The maximum possible value we could see for this metric, if such a max is relevant and can vary from session to session.
      */
     readonly metric_max?: number;
+    [k: string]: unknown;
+}
+/**
+ * Schema for view-level RUM performance data (Web Vitals, etc.)
+ */
+export interface ViewPerformanceData {
+    /**
+     * Cumulative Layout Shift
+     */
+    readonly cls?: {
+        /**
+         * Total layout shift score that occurred on the view
+         */
+        readonly score: number;
+        /**
+         * The time of the largest layout shift contributing to CLS, in ns since view start.
+         */
+        readonly timestamp?: number;
+        /**
+         * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS
+         */
+        readonly target_selector?: string;
+        /**
+         * Bounding client rect of the element before the layout shift
+         */
+        previous_rect?: RumRect;
+        /**
+         * Bounding client rect of the element after the layout shift
+         */
+        current_rect?: RumRect;
+        [k: string]: unknown;
+    };
+    /**
+     * First Contentful Paint
+     */
+    readonly fcp?: {
+        /**
+         * The time of the first rendering, in ns since view start.
+         */
+        readonly timestamp: number;
+        [k: string]: unknown;
+    };
+    /**
+     * First Input Delay
+     */
+    readonly fid?: {
+        /**
+         * Duration in ns of the first input event delay
+         */
+        readonly duration: number;
+        /**
+         * Time of the first input event, in ns since view start.
+         */
+        readonly timestamp: number;
+        /**
+         * CSS selector path of the first input target element
+         */
+        readonly target_selector?: string;
+        [k: string]: unknown;
+    };
+    /**
+     * Interaction to Next Paint
+     */
+    readonly inp?: {
+        /**
+         * Longest duration in ns between an interaction and the next paint
+         */
+        readonly duration: number;
+        /**
+         * Time of the start of the INP interaction, in ns since view start.
+         */
+        readonly timestamp?: number;
+        /**
+         * CSS selector path of the interacted element for the INP interaction
+         */
+        readonly target_selector?: string;
+        /**
+         * Sub-parts of the INP
+         */
+        sub_parts?: {
+            /**
+             * Time from the start of the input event to the start of the processing of the event
+             */
+            readonly input_delay: number;
+            /**
+             * Event handler execution time
+             */
+            readonly processing_duration: number;
+            /**
+             * Rendering time happening after processing
+             */
+            readonly presentation_delay: number;
+            [k: string]: unknown;
+        };
+        [k: string]: unknown;
+    };
+    /**
+     * Largest Contentful Paint
+     */
+    readonly lcp?: {
+        /**
+         * Time of the largest contentful paint, in ns since view start.
+         */
+        readonly timestamp: number;
+        /**
+         * CSS selector path of the largest contentful paint element
+         */
+        readonly target_selector?: string;
+        /**
+         * URL of the largest contentful paint element
+         */
+        resource_url?: string;
+        /**
+         * Sub-parts of the LCP
+         */
+        sub_parts?: {
+            /**
+             * Time between first_byte and the loading start of the resource associated with the LCP
+             */
+            readonly load_delay: number;
+            /**
+             * Time to takes to load the resource attached to the LCP
+             */
+            readonly load_time: number;
+            /**
+             * Time between the LCP resource finishes loading and the LCP element is fully rendered
+             */
+            readonly render_delay: number;
+            [k: string]: unknown;
+        };
+        [k: string]: unknown;
+    };
+    /**
+     * First Build Complete (Flutter)
+     */
+    readonly fbc?: {
+        /**
+         * Time of all completed `build` methods after a route change, in ns since view start.
+         */
+        readonly timestamp: number;
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+}
+/**
+ * Schema for DOMRect-like rectangles describing an element's bounding client rect
+ */
+export interface RumRect {
+    /**
+     * The x coordinate of the element's origin
+     */
+    readonly x: number;
+    /**
+     * The y coordinate of the element's origin
+     */
+    readonly y: number;
+    /**
+     * The element's width
+     */
+    readonly width: number;
+    /**
+     * The element's height
+     */
+    readonly height: number;
+    [k: string]: unknown;
+}
+/**
+ * Compact representation of accessibility features for a view
+ */
+export interface ViewAccessibilityProperties {
+    /**
+     * User’s preferred text scale relative to the default system size.
+     */
+    readonly text_size?: string;
+    /**
+     * Indicates whether a screen reader is currently active.
+     */
+    readonly screen_reader_enabled?: boolean;
+    /**
+     * Indicates whether the system-wide bold text accessibility setting is enabled.
+     */
+    readonly bold_text_enabled?: boolean;
+    /**
+     * Indicates whether the system-wide reduce transparency setting is enabled.
+     */
+    readonly reduce_transparency_enabled?: boolean;
+    /**
+     * Indicates whether the system-wide reduce motion setting is enabled.
+     */
+    readonly reduce_motion_enabled?: boolean;
+    /**
+     * Indicates whether the system-wide button shapes setting is enabled.
+     */
+    readonly button_shapes_enabled?: boolean;
+    /**
+     * Indicates whether the system-wide color inversion setting is enabled.
+     */
+    readonly invert_colors_enabled?: boolean;
+    /**
+     * Indicates whether the system-wide increase contrast setting is enabled.
+     */
+    readonly increase_contrast_enabled?: boolean;
+    /**
+     * Indicates whether an alternative input method like Switch Control or Switch Access is currently enabled.
+     */
+    readonly assistive_switch_enabled?: boolean;
+    /**
+     * Indicates whether the system-wide AssistiveTouch feature is currently enabled.
+     */
+    readonly assistive_touch_enabled?: boolean;
+    /**
+     * Indicates whether the video autoplay setting is enabled in the system or application.
+     */
+    readonly video_autoplay_enabled?: boolean;
+    /**
+     * Indicates whether closed captioning is enabled for media playback.
+     */
+    readonly closed_captioning_enabled?: boolean;
+    /**
+     * Indicates whether the system-wide mono audio setting is enabled.
+     */
+    readonly mono_audio_enabled?: boolean;
+    /**
+     * Indicates whether the Shake to Undo feature is enabled.
+     */
+    readonly shake_to_undo_enabled?: boolean;
+    /**
+     * Indicates whether the user prefers reduced animations or cross-fade transitions.
+     */
+    readonly reduced_animations_enabled?: boolean;
+    /**
+     * Indicates whether the system should differentiate interface elements without relying solely on color.
+     */
+    readonly should_differentiate_without_color?: boolean;
+    /**
+     * Indicates whether the device display is currently using grayscale mode.
+     */
+    readonly grayscale_enabled?: boolean;
+    /**
+     * Indicates whether the device is currently locked to a single app through Guided Access or Screen Pinning.
+     */
+    readonly single_app_mode_enabled?: boolean;
+    /**
+     * Indicates whether on/off switch labels are enabled in the system settings.
+     */
+    readonly on_off_switch_labels_enabled?: boolean;
+    /**
+     * Indicates whether the Speak Screen feature is enabled.
+     */
+    readonly speak_screen_enabled?: boolean;
+    /**
+     * Indicates whether the text-to-speech selection feature is enabled.
+     */
+    readonly speak_selection_enabled?: boolean;
+    /**
+     * Indicates whether the right-to-left support is enabled.
+     */
+    readonly rtl_enabled?: boolean;
     [k: string]: unknown;
 }
