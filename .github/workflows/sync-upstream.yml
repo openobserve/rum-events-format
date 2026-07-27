@@ -89,7 +89,7 @@ jobs:
           BODY=$(cat <<EOF
           Automated upstream sync to **DataDog/rum-events-format @ \`${TARGET:0:12}\`**.
 
-          Pipeline: upstream commit → keep-ours overlay → rebrand codemod (\`_dd\`→\`_oo\`, +openobserve propagator) → \`yarn generate\` → format.
+          Pipeline: upstream commit → keep-ours overlay → rebrand codemod (\`_dd\`→\`_o2\`, +openobserve propagator) → \`yarn generate\` → format.
 
           | Gate | Result |
           | --- | --- |

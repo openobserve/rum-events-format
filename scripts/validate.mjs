@@ -25,7 +25,7 @@ function validateSchemasObjectsPropertiesCase() {
     [`${SCHEMAS_DIRECTORY}/session-replay/common/focus-record-schema.json`, ['has_focus']],
     [`${SCHEMAS_DIRECTORY}/rum/_graphql-schema.json`, ['operationType', 'operationName']],
     [`${SCHEMAS_DIRECTORY}/profiling/_common-schema.json`, ['long_task', 'tags_profiler']],
-    [`${SCHEMAS_DIRECTORY}/profiling/browser/profile-event-schema.json`, ['_oo', 'clock_drift']],
+    [`${SCHEMAS_DIRECTORY}/profiling/browser/profile-event-schema.json`, ['_o2', 'clock_drift']],
     [`${SCHEMAS_DIRECTORY}/profiling/mobile/profile-rum-metadata-event-schema.json`, ['duration_ns', 'start_ns']],
   ])
 
