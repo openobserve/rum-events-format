@@ -104,7 +104,7 @@ export type RumActionEvent = CommonProperties & ViewContainerSchema & {
     /**
      * Internal properties
      */
-    _oo?: {
+    _o2?: {
         /**
          * Action properties
          */
@@ -463,7 +463,7 @@ export type RumErrorEvent = CommonProperties & ActionChildProperties & ViewConta
     /**
      * Internal properties
      */
-    readonly _oo?: RumTrace & {
+    readonly _o2?: RumTrace & {
         /**
          * Profiling context
          */
@@ -575,7 +575,7 @@ export type RumLongTaskEvent = CommonProperties & ActionChildProperties & ViewCo
     /**
      * Internal properties
      */
-    readonly _oo?: {
+    readonly _o2?: {
         /**
          * Whether the long task should be discarded or indexed
          */
@@ -806,7 +806,7 @@ export type RumResourceEvent = CommonProperties & ActionChildProperties & ViewCo
     /**
      * Internal properties
      */
-    readonly _oo?: RumTrace & {
+    readonly _o2?: RumTrace & {
         /**
          * Whether the resource should be discarded or indexed
          */
@@ -839,7 +839,7 @@ export type RumViewEvent = CommonProperties & ViewContainerSchema & StreamSchema
     /**
      * Internal properties
      */
-    readonly _oo: {
+    readonly _o2: {
         /**
          * Version of the update of the view event
          */
@@ -915,7 +915,7 @@ export type RumViewUpdateEvent = ViewContainerSchema & StreamSchema & ViewProper
     /**
      * Internal properties
      */
-    readonly _oo?: {
+    readonly _o2?: {
         /**
          * Version of the update of the view event
          */
@@ -974,7 +974,7 @@ export type RumVitalEventCommonProperties = CommonProperties & ViewContainerSche
     /**
      * Internal properties
      */
-    readonly _oo?: {
+    readonly _o2?: {
         /**
          * Profiling context
          */
@@ -1346,7 +1346,7 @@ export interface CommonProperties {
     /**
      * Internal properties
      */
-    readonly _oo: {
+    readonly _o2: {
         /**
          * Version of the RUM event format
          */

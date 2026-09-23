@@ -10,7 +10,7 @@
     },
     {
       "type": "object",
-      "required": ["format", "_oo"],
+      "required": ["format", "_o2"],
       "properties": {
         "format": {
           "type": "string",
@@ -18,7 +18,7 @@
           "description": "Profile data format.",
           "readOnly": true
         },
-        "_oo": {
+        "_o2": {
           "type": "object",
           "description": "Datadog internal metadata.",
           "required": ["clock_drift"],

@@ -4,9 +4,9 @@
   "title": "CommonTelemetryProperties",
   "type": "object",
   "description": "Schema of common properties of Telemetry events",
-  "required": ["_oo", "type", "date", "service", "source", "version"],
+  "required": ["_o2", "type", "date", "service", "source", "version"],
   "properties": {
-    "_oo": {
+    "_o2": {
       "type": "object",
       "description": "Internal properties",
       "required": ["format_version"],

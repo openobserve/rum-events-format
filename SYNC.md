@@ -18,7 +18,7 @@ files**, and **no functional patch series** (unlike browser-sdk).
 
 | Change                                               | How                                                                               |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `_dd` event namespace → `_oo`                        | `rename-map.json` regex `\b_dd\b` → `_oo`, applied to `schemas/` + `samples/`     |
+| `_dd` event namespace → `_o2`                        | `rename-map.json` regex `\b_dd\b` → `_o2`, applied to `schemas/` + `samples/`     |
 | `"openobserve"` added to the tracing-propagator enum | `rename-map.json` literal rule on `configuration-schema.json`                     |
 | Repository URL / package description                 | `rename-map.json` literals on `lib/package.json`                                  |
 | LICENSE, NOTICE, README, `.github/`                  | fork-owned (`keep-ours.txt`), taken from the `openobserve` branch                 |
@@ -47,7 +47,7 @@ Then: `yarn validate`, push the `sync/upstream-<short>` branch, open a PR agains
 
 ## Keeping browser-sdk in lockstep
 
-The schema commit and the SDK that emits `_oo` must move together. After a fork sync PR merges,
+The schema commit and the SDK that emits `_o2` must move together. After a fork sync PR merges,
 bump the browser-sdk pin to the merged commit:
 
 ```bash
