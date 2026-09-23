@@ -9,7 +9,7 @@ The format must stay backward compatible in order to be able to validate old eve
 - New fields must not be set as required
 - Fields definition must not be updated, new fields must be created instead
 
-Breaking changes to the format must be reflected by a major version update in `_oo.format_version` property.
+Breaking changes to the format must be reflected by a major version update in `_o2.format_version` property.
 
 After editing any schema, you must re-generate the JS + TS definitions ([see below](#build-js-sources--ts-definitions)).
 

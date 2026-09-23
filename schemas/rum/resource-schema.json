@@ -337,7 +337,7 @@
           },
           "readOnly": true
         },
-        "_oo": {
+        "_o2": {
           "type": "object",
           "description": "Internal properties",
           "allOf": [
